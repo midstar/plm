@@ -20,8 +20,8 @@ install:
   - go get github.com\mattn\goveralls
  
 build_script:
-    - go build github.com\midstar\plm
-    - go test -v -cover github.com\midstar\plm -coverprofile=coverage.out
+  - go build github.com\midstar\plm
+  - go test -v -cover github.com\midstar\plm -coverprofile=coverage.out
   - dir
   - echo %COVERALLS_TOKEN%
   
