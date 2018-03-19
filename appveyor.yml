@@ -17,7 +17,16 @@ install:
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
+  - go get github.com\mattn\goveralls
  
 build_script:
     - go build github.com\midstar\plm
-    - go test -v -cover github.com\midstar\plm
+    - go test -v -cover github.com\midstar\plm -coverprofile=coverage.out
+  - dir
+  - echo %COVERALLS_TOKEN%
+  
+  - >
+    %GOPATH%/bin/goveralls
+    -coverprofile=coverage.out
+    -service=appveyor-ci
+    -repotoken=%COVERALLS_TOKEN%

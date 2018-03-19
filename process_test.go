@@ -2,10 +2,14 @@
 package main
 
 import (
+	"github.com/midstar/proci"
 	"testing"
 )
 
+type ProcessInterface interface {
+}
+
 func TestProcessUpdate(t *testing.T) {
-  processMap := NewProcessMap()
-  processMap.Update()
+	processMap := NewProcessMap(proci.Proci{})
+	processMap.Update()
 }
