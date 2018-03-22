@@ -14,7 +14,7 @@ type Process struct {
 	CommandLine   string // The process command line
 	MaxMemoryEver uint32 // Maximum memory ever measured (KB)
 	MinMemoryEver uint32 // Minimum memory ever measured (KB)
-	CurrMaxMemory uint32 // Current max memory measured (KB) (will be zeroed)
+	LastMemory    uint32 // Last memory measured (KB)
 }
 
 // ProcessMap has two internal maps. Both maps are pointing to the
@@ -25,6 +25,10 @@ type ProcessMap struct {
 	nextUniqueID int                 // Increment for each created process
 	All          map[int]*Process    // A map with all processes, keyed on UID
 	Alive        map[uint32]*Process // A map with the living processes, keyd on PID
+	TotalPhys    uint32              // Total memory installed (KB)
+	MaxPhysEver  uint32              // Maximum used physical memory ever measured (KB)
+	MinPhysEver  uint32              // Minimum used physical memory ever measured (KB)
+	LastPhys     uint32              // Last used physical memory measured (KB)
 	Pi           proci.Interface     // Interface for reading processes
 }
 
@@ -80,29 +84,30 @@ func (processMap *ProcessMap) Update() {
 
 	// List and update or create all processes
 
-	pids := proci.GetProcessPids()
+	pids := processMap.Pi.GetProcessPids()
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
-		if pid == 0 {
-			// This is the idle process. No operations can be performed
-			// on it.
-			continue
-		}
 		process, hasPid := processMap.Alive[pid]
-		path, patherr := proci.GetProcessPath(pid)
+		path, patherr := processMap.Pi.GetProcessPath(pid)
 		if patherr != nil || path == "" {
 			// This is probably a system process that we cannot access.
 			// Pointless to track this process
 			if hasPid {
-				// It was a valid process with pid this before. It's must have
+				// It was a valid process with pid this before. I must have
 				// died
 				processMap.ProcessKilled(pid)
 			}
 			continue
 		}
+		if hasPid && path != process.Path {
+			// The path has changed. It must be a new process that has replaced
+			// the old one.
+			processMap.ProcessKilled(pid)
+			hasPid = false
+		}
 		if !hasPid {
 			// We have a new process
-			commandLine, cmderr := proci.GetProcessCommandLine(pid)
+			commandLine, cmderr := processMap.Pi.GetProcessCommandLine(pid)
 			if cmderr != nil {
 				// Expected for some system processes.
 				commandLine = ""
@@ -111,20 +116,19 @@ func (processMap *ProcessMap) Update() {
 		}
 		process.IsAlive = true
 
-		memoryUsage, memerr := proci.GetProcessMemoryUsage(pid)
+		memoryUsage, memerr := processMap.Pi.GetProcessMemoryUsage(pid)
 		if memerr != nil {
 			fmt.Println("GetProcessMemoryUsage for PID", pid, "returned error:", memerr)
+			process.LastMemory = 0
 		} else {
 			memoryUsageKB := uint32(memoryUsage / 1024) // Byte to KiloByte
-			if process.MinMemoryEver == 0 {
+			if process.MinMemoryEver == 0 || memoryUsageKB < process.MinMemoryEver {
 				process.MinMemoryEver = memoryUsageKB
 			}
 			if memoryUsageKB > process.MaxMemoryEver {
 				process.MaxMemoryEver = memoryUsageKB
 			}
-			if memoryUsageKB > process.CurrMaxMemory {
-				process.CurrMaxMemory = memoryUsageKB
-			}
+			process.LastMemory = memoryUsageKB
 		}
 	}
 
@@ -132,6 +136,22 @@ func (processMap *ProcessMap) Update() {
 	for pid, process := range processMap.Alive {
 		if process.IsAlive == false {
 			processMap.ProcessKilled(pid)
+		}
+	}
+
+	// Update the overall (physical memory)
+	memoryStatus, memstaterr := processMap.Pi.GetMemoryStatus()
+	if memstaterr != nil {
+		fmt.Println("GetMemoryStatus returned error:", memstaterr)
+		processMap.LastPhys = 0
+	} else {
+		processMap.TotalPhys = uint32(memoryStatus.TotalPhys / 1024)                     // Byte to KiloByte
+		processMap.LastPhys = processMap.TotalPhys - uint32(memoryStatus.AvailPhys/1024) // Byte to KiloByte
+		if processMap.LastPhys > processMap.MaxPhysEver {
+			processMap.MaxPhysEver = processMap.LastPhys
+		}
+		if processMap.MinPhysEver == 0 || processMap.LastPhys < processMap.MinPhysEver {
+			processMap.MinPhysEver = processMap.LastPhys
 		}
 	}
 }
