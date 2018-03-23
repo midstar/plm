@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"github.com/midstar/proci"
+	"time"
 )
 
 // Process represent one unique process
@@ -30,7 +30,7 @@ type ProcessMap struct {
 	MaxPhysEver  uint32              // Maximum used physical memory ever measured (KB)
 	MinPhysEver  uint32              // Minimum used physical memory ever measured (KB)
 	LastPhys     uint32              // Last used physical memory measured (KB)
-	LastUpdate   time.Time					 // Last time this map was updated
+	LastUpdate   time.Time           // Last time this map was updated
 	Pi           proci.Interface     // Interface for reading processes
 }
 
@@ -133,7 +133,7 @@ func (processMap *ProcessMap) Update() {
 			process.LastMemory = memoryUsageKB
 		}
 	}
-	
+
 	processMap.LastUpdate = time.Now()
 
 	// Mark all processes not listed as killed

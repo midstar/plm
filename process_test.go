@@ -27,8 +27,8 @@ func TestProcessUpdate(t *testing.T) {
 	pMock := proci.GenerateMock(10)
 	pMap := NewProcessMap(pMock)
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 10, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 10, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 10, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 10, len(pMap.Alive))
 
 	p8 := pMap.Alive[8]
 	assertEqualsInt(t, "Process 8 PID", 8, int(p8.Pid))
@@ -41,32 +41,32 @@ func TestProcessUpdate(t *testing.T) {
 
 	pMock.Processes[8].MemoryUsage = 1024 * 20
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 10, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 10, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 10, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 10, len(pMap.Alive))
 	assertEqualsInt(t, "Process 8 MaxMemoryEver", 20, int(p8.MaxMemoryEver))
 	assertEqualsInt(t, "Process 8 MinMemoryEver", 9, int(p8.MinMemoryEver))
 	assertEqualsInt(t, "Process 8 LastMemory", 20, int(p8.LastMemory))
 
 	pMock.Processes[8].MemoryUsage = 1024 * 3
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 10, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 10, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 10, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 10, len(pMap.Alive))
 	assertEqualsInt(t, "Process 8 MaxMemoryEver", 20, int(p8.MaxMemoryEver))
 	assertEqualsInt(t, "Process 8 MinMemoryEver", 3, int(p8.MinMemoryEver))
 	assertEqualsInt(t, "Process 8 LastMemory", 3, int(p8.LastMemory))
 
 	pMock.Processes[8].MemoryUsage = 1024 * 4
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 10, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 10, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 10, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 10, len(pMap.Alive))
 	assertEqualsInt(t, "Process 8 MaxMemoryEver", 20, int(p8.MaxMemoryEver))
 	assertEqualsInt(t, "Process 8 MinMemoryEver", 3, int(p8.MinMemoryEver))
 	assertEqualsInt(t, "Process 8 LastMemory", 4, int(p8.LastMemory))
 
 	delete(pMock.Processes, 8)
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 10, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 9, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 10, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	_, hasP8 := pMap.Alive[8]
 	assertTrue(t, "PID P8 dead", !hasP8)
 
@@ -74,15 +74,15 @@ func TestProcessUpdate(t *testing.T) {
 	assertEqualsStr(t, "Process 3 path", "path_3", p3.Path)
 	pMock.Processes[3].Path = "new_path_3"
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 11, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 9, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 11, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	assertTrue(t, "New PID 3 differs from old", p3.UID != pMap.Alive[3].UID)
 
 	p2 := pMap.Alive[2]
 	pMock.Processes[2].Path = ""
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 11, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 8, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 11, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 8, len(pMap.Alive))
 	assertTrue(t, "New PID 2 is dead", !p2.IsAlive)
 
 	pMock.Processes[34] = &proci.ProcessMock{
@@ -95,8 +95,8 @@ func TestProcessUpdate(t *testing.T) {
 		DoFailMemoryUsage: false}
 
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 12, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 9, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 12, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	assertEqualsStr(t, "Process 34 path", "path_34", pMap.Alive[34].Path)
 
 	pMock.Processes[22] = &proci.ProcessMock{
@@ -108,8 +108,8 @@ func TestProcessUpdate(t *testing.T) {
 		DoFailCommandLine: false,
 		DoFailMemoryUsage: false}
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 12, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 9, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 12, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	_, hasPid22 := pMap.Alive[22]
 	assertTrue(t, "Process 22 shall be ignored", !hasPid22)
 
@@ -122,8 +122,8 @@ func TestProcessUpdate(t *testing.T) {
 		DoFailCommandLine: false,
 		DoFailMemoryUsage: false}
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 12, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 9, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 12, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	_, hasPid23 := pMap.Alive[23]
 	assertTrue(t, "Process 23 shall be ignored", !hasPid23)
 
@@ -136,8 +136,8 @@ func TestProcessUpdate(t *testing.T) {
 		DoFailCommandLine: true,
 		DoFailMemoryUsage: true}
 	pMap.Update()
-	assertEqualsInt(t, "Lenght of pMap.All", 13, len(pMap.All))
-	assertEqualsInt(t, "Lenght of pMap.Alive", 10, len(pMap.Alive))
+	assertEqualsInt(t, "Length of pMap.All", 13, len(pMap.All))
+	assertEqualsInt(t, "Length of pMap.Alive", 10, len(pMap.Alive))
 	assertEqualsStr(t, "Process 24 has empty CommandLine", "", pMap.Alive[24].CommandLine)
 	assertEqualsInt(t, "Process 24 has no Memory", 0, int(pMap.Alive[24].LastMemory))
 
