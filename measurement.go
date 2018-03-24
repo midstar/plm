@@ -16,10 +16,10 @@ type Measurement struct {
 
 // CreateMeasurement creates a new measurment object
 //
-// Parameter mutex is used to protect the Measurement struct in different 
-// threads. 
-func CreateMeasurement(fastLoggerSize int, slowLoggerSize int, 
-                       mutex *sync.Mutex, pi proci.Interface) *Measurement {
+// Parameter mutex is used to protect the Measurement struct in different
+// threads.
+func CreateMeasurement(fastLoggerSize int, slowLoggerSize int,
+	mutex *sync.Mutex, pi proci.Interface) *Measurement {
 	return &Measurement{
 		FastLogger: CreateLogger(fastLoggerSize),
 		SlowLogger: CreateLogger(slowLoggerSize),
@@ -36,22 +36,22 @@ func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int, halt cha
 	addToSlowLog := false
 	iter := 1
 	for !haltMeasurement {
-	
-		if iter % slowLogFactor == 0 {
+
+		if iter%slowLogFactor == 0 {
 			addToSlowLog = true
 			iter = 0
 		} else {
 			addToSlowLog = false
 		}
-		
+
 		m.measureAndLog(addToSlowLog)
-		
+
 		iter++
-		
+
 		select {
-		case <- halt:
+		case <-halt:
 			haltMeasurement = true
-		case <- time.After(time.Duration(fastLogTimeMs)*time.Millisecond):
+		case <-time.After(time.Duration(fastLogTimeMs) * time.Millisecond):
 		}
 	}
 }
@@ -80,6 +80,6 @@ func (m *Measurement) measureAndLog(addToSlowLogger bool) {
 	if addToSlowLogger {
 		m.SlowLogger.AddRow(&row)
 	}
-	
+
 	m.Mutex.Unlock()
 }

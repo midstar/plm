@@ -32,17 +32,37 @@ func TestMeasureLoop(t *testing.T) {
 	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
 
 	halt := make(chan bool)
-	
+
 	go m.MeasureLoop(500, 2, halt)
-	
+
 	time.Sleep(3 * time.Second)
-	
+
 	// Halt the measurement loop
 	halt <- true
-	
+
 	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
 	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
 	assertTrue(t, "Size of FastLogger", m.FastLogger.NbrRows > 4 && m.FastLogger.NbrRows < 8)
-	assertEqualsInt(t, "Size of SlowLogger", int(m.FastLogger.NbrRows / 2), m.SlowLogger.NbrRows)
-	
+	assertEqualsInt(t, "Size of SlowLogger", int(m.FastLogger.NbrRows/2), m.SlowLogger.NbrRows)
+
+}
+
+func TestMeasureLoop2(t *testing.T) {
+	mutex := sync.Mutex{}
+	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
+
+	halt := make(chan bool)
+
+	go m.MeasureLoop(200, 3, halt)
+
+	time.Sleep(3 * time.Second)
+
+	// Halt the measurement loop
+	halt <- true
+
+	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
+	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
+	assertTrue(t, "Size of FastLogger", m.FastLogger.NbrRows > 12 && m.FastLogger.NbrRows < 18)
+	assertEqualsInt(t, "Size of SlowLogger", int(m.FastLogger.NbrRows/3), m.SlowLogger.NbrRows)
+
 }
