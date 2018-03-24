@@ -11,7 +11,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	configuration := loadConfiguration()
+	configuration := LoadConfiguration(DefaultConfigFile)
 	log.Printf("Listening to port: %d", configuration.Port)
 	portStr := fmt.Sprintf(":%d", configuration.Port)
 	http.HandleFunc("/", handler)
