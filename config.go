@@ -44,7 +44,7 @@ func getPropertyInt(properties map[string]string, key string, defaultValue int) 
 	}
 	intValue, valueerr := strconv.Atoi(value)
 	if valueerr != nil {
-		fmt.Printf("Property %s does not have a valid integer value. Using default %d", key, defaultValue)
+		fmt.Printf("Property %s does not have a valid integer value. Using default %d\n", key, defaultValue)
 		return defaultValue
 	}
 	return intValue
