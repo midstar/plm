@@ -11,40 +11,40 @@ type Measurement struct {
 	FastLogger *Logger
 	SlowLogger *Logger
 	PM         *ProcessMap
+	Mutex      *sync.Mutex // Only access this struct using this mutex
 }
 
 // CreateMeasurement creates a new measurment object
-func CreateMeasurement(fastLoggerSize int, slowLoggerSize int, pi proci.Interface) *Measurement {
+//
+// Parameter mutex is used to protect the Measurement struct in different 
+// threads. 
+func CreateMeasurement(fastLoggerSize int, slowLoggerSize int, 
+                       mutex *sync.Mutex, pi proci.Interface) *Measurement {
 	return &Measurement{
 		FastLogger: CreateLogger(fastLoggerSize),
 		SlowLogger: CreateLogger(slowLoggerSize),
-		PM:         NewProcessMap(pi)}
+		PM:         NewProcessMap(pi),
+		Mutex:      mutex}
 }
 
 // MeasureLoop runs the measurement loop. Supposed to be runned as a goroutine.
 //
-// Parameter mutex is used to protect the Measurement struct in different 
-// threads. 
-//
 // Parameter halt is a channel to which you can send a bool value to halt the
 // measurement loop (i.e. exit this function).
-func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int, 
-                                  mutex *sync.Mutex, halt chan bool) {
+func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int, halt chan bool) {
 	haltMeasurement := false
 	addToSlowLog := false
 	iter := 1
 	for !haltMeasurement {
-
+	
 		if iter % slowLogFactor == 0 {
 			addToSlowLog = true
-			iter = 1
+			iter = 0
 		} else {
 			addToSlowLog = false
 		}
 		
-		mutex.Lock()
 		m.measureAndLog(addToSlowLog)
-		mutex.Unlock()
 		
 		iter++
 		
@@ -58,6 +58,7 @@ func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int,
 
 // measureAndLog performs measurement and add to FastLogger. Optionally also log to SlowLogger.
 func (m *Measurement) measureAndLog(addToSlowLogger bool) {
+	m.Mutex.Lock()
 
 	m.PM.Update()
 
@@ -79,5 +80,6 @@ func (m *Measurement) measureAndLog(addToSlowLogger bool) {
 	if addToSlowLogger {
 		m.SlowLogger.AddRow(&row)
 	}
-
+	
+	m.Mutex.Unlock()
 }

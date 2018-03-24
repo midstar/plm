@@ -8,7 +8,7 @@ import (
 )
 
 func TestMeasurement(t *testing.T) {
-	m := CreateMeasurement(2, 4, proci.Proci{})
+	m := CreateMeasurement(2, 4, &sync.Mutex{}, proci.Proci{})
 
 	m.measureAndLog(false)
 	assertEqualsInt(t, "Size of FastLogger", 1, m.FastLogger.NbrRows)
@@ -28,15 +28,21 @@ func TestMeasurement(t *testing.T) {
 }
 
 func TestMeasureLoop(t *testing.T) {
-	m := CreateMeasurement(2, 4, proci.Proci{})
 	mutex := sync.Mutex{}
+	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
+
 	halt := make(chan bool)
 	
-	go m.MeasureLoop(100, 2, &mutex, halt)
+	go m.MeasureLoop(500, 2, halt)
 	
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 	
 	// Halt the measurement loop
 	halt <- true
+	
+	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
+	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
+	assertTrue(t, "Size of FastLogger", m.FastLogger.NbrRows > 4 && m.FastLogger.NbrRows < 8)
+	assertEqualsInt(t, "Size of SlowLogger", int(m.FastLogger.NbrRows / 2), m.SlowLogger.NbrRows)
 	
 }
