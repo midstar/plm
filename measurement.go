@@ -32,15 +32,15 @@ func CreateMeasurement(fastLoggerSize int, slowLoggerSize int,
 		halt:          make(chan bool)}
 }
 
-// StartMeasurement starts the measurement as a separate goroutine. 
+// Start starts the measurement as a separate goroutine. 
 //
-// Stop the measurement with StopMeasurement.
-func (m *Measurement) StartMeasurement() {
+// Stop the measurement with Stop.
+func (m *Measurement) Start() {
 	go m.measureLoop()
 }
 
-// StopMeasurement stops the measurement.
-func (m *Measurement) StopMeasurement() {
+// Stop stops the measurement.
+func (m *Measurement) Stop() {
 	m.halt <- true
 }
 

@@ -28,11 +28,11 @@ func TestMeasurement(t *testing.T) {
 
 func TestMeasureLoop(t *testing.T) {
 	m := CreateMeasurement(20, 20, 500, 2, proci.Proci{})
-	m.StartMeasurement()
+	m.Start()
 
 	time.Sleep(3 * time.Second)
 
-	m.StopMeasurement()
+	m.Stop()
 
 	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
 	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
@@ -43,11 +43,11 @@ func TestMeasureLoop(t *testing.T) {
 
 func TestMeasureLoop2(t *testing.T) {
 	m := CreateMeasurement(20, 20, 200, 3, proci.Proci{})
-	m.StartMeasurement()
+	m.Start()
 
 	time.Sleep(3 * time.Second)
 
-	m.StopMeasurement()
+	m.Stop()
 
 	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
 	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
