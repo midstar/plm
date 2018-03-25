@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,7 +26,41 @@ func CreateHTTPServer(port int, measurement *Measurement) *HTTPServer {
 
 // ServeHTTP handles incoming HTTP requests
 func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
+	switch r.URL.Path {
+	case "/":
+		http.ServeFile(w, r, "templates/index.gohtml")
+	case "/processes" :
+		s.serveHTTPListAllProcesses(w)
+	case "/ram" :
+		s.serveHTTPGetRAM(w)
+	default :
+    w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "This is not a valid path: %s!", r.URL.Path)
+	}
+}
+
+func (s *HTTPServer) serveHTTPListAllProcesses(w http.ResponseWriter) {
+	s.measurement.Mutex.Lock()
+  js, err := json.Marshal(s.measurement.PM.All)
+	s.measurement.Mutex.Unlock()
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  w.Header().Set("Content-Type", "application/json")
+  w.Write(js)
+}
+
+func (s *HTTPServer) serveHTTPGetRAM(w http.ResponseWriter) {
+	s.measurement.Mutex.Lock()
+  js, err := json.Marshal(s.measurement.PM.Phys)
+	s.measurement.Mutex.Unlock()
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  w.Header().Set("Content-Type", "application/json")
+  w.Write(js)
 }
 
 // Start starts the HTTP server. Stop it using the Stop function.

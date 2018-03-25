@@ -143,30 +143,30 @@ func TestProcessUpdate(t *testing.T) {
 
 	////////////////////////////////////////////////////////////////////////////
 	// Physical memory
-	assertEqualsInt(t, "Size of pMap.TotalPhys", 4*1024*1024, int(pMap.TotalPhys))
-	assertEqualsInt(t, "Size of pMap.MaxPhysEver", 2*1024*1024, int(pMap.MaxPhysEver))
-	assertEqualsInt(t, "Size of pMap.MinPhysEver", 2*1024*1024, int(pMap.MinPhysEver))
-	assertEqualsInt(t, "Size of pMap.LastPhys", 2*1024*1024, int(pMap.LastPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.TotalPhys", 4*1024*1024, int(pMap.Phys.TotalPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.MaxPhysEver", 2*1024*1024, int(pMap.Phys.MaxPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.MinPhysEver", 2*1024*1024, int(pMap.Phys.MinPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.LastPhys", 2*1024*1024, int(pMap.Phys.LastPhys))
 
 	pMock.MemStatus.AvailPhys = 3 * 1024 * 1024 * 1024 // Bytes
 	pMap.Update()
-	assertEqualsInt(t, "Size of pMap.TotalPhys", 4*1024*1024, int(pMap.TotalPhys))
-	assertEqualsInt(t, "Size of pMap.MaxPhysEver", 2*1024*1024, int(pMap.MaxPhysEver))
-	assertEqualsInt(t, "Size of pMap.MinPhysEver", 1*1024*1024, int(pMap.MinPhysEver))
-	assertEqualsInt(t, "Size of pMap.LastPhys", 1*1024*1024, int(pMap.LastPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.TotalPhys", 4*1024*1024, int(pMap.Phys.TotalPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.MaxPhysEver", 2*1024*1024, int(pMap.Phys.MaxPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.MinPhysEver", 1*1024*1024, int(pMap.Phys.MinPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.LastPhys", 1*1024*1024, int(pMap.Phys.LastPhys))
 
 	pMock.MemStatus.AvailPhys = 1 * 1024 * 1024 * 1024 // Bytes
 	pMap.Update()
-	assertEqualsInt(t, "Size of pMap.TotalPhys", 4*1024*1024, int(pMap.TotalPhys))
-	assertEqualsInt(t, "Size of pMap.MaxPhysEver", 3*1024*1024, int(pMap.MaxPhysEver))
-	assertEqualsInt(t, "Size of pMap.MinPhysEver", 1*1024*1024, int(pMap.MinPhysEver))
-	assertEqualsInt(t, "Size of pMap.LastPhys", 3*1024*1024, int(pMap.LastPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.TotalPhys", 4*1024*1024, int(pMap.Phys.TotalPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.MaxPhysEver", 3*1024*1024, int(pMap.Phys.MaxPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.MinPhysEver", 1*1024*1024, int(pMap.Phys.MinPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.LastPhys", 3*1024*1024, int(pMap.Phys.LastPhys))
 
 	pMock.DoFailMemStatus = true
 	pMap.Update()
-	assertEqualsInt(t, "Size of pMap.TotalPhys", 4*1024*1024, int(pMap.TotalPhys))
-	assertEqualsInt(t, "Size of pMap.MaxPhysEver", 3*1024*1024, int(pMap.MaxPhysEver))
-	assertEqualsInt(t, "Size of pMap.MinPhysEver", 1*1024*1024, int(pMap.MinPhysEver))
-	assertEqualsInt(t, "Size of pMap.LastPhys", 0*1024*1024, int(pMap.LastPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.TotalPhys", 4*1024*1024, int(pMap.Phys.TotalPhys))
+	assertEqualsInt(t, "Size of pMap.Phys.MaxPhysEver", 3*1024*1024, int(pMap.Phys.MaxPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.MinPhysEver", 1*1024*1024, int(pMap.Phys.MinPhysEver))
+	assertEqualsInt(t, "Size of pMap.Phys.LastPhys", 0*1024*1024, int(pMap.Phys.LastPhys))
 
 }

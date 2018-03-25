@@ -18,6 +18,14 @@ type Process struct {
 	LastMemory    uint32 // Last memory measured (KB)
 }
 
+// PhysicalMemory represents the physical RAM memory
+type PhysicalMemory struct {
+	TotalPhys    uint32              // Total memory installed (KB)
+	MaxPhysEver  uint32              // Maximum used physical memory ever measured (KB)
+	MinPhysEver  uint32              // Minimum used physical memory ever measured (KB)
+	LastPhys     uint32              // Last used physical memory measured (KB)
+}
+
 // ProcessMap has two internal maps. Both maps are pointing to the
 // same Process objects, but keyed on different identities.
 // The reason for this design is that the PID's might be reused by
@@ -26,10 +34,7 @@ type ProcessMap struct {
 	nextUniqueID int                 // Increment for each created process
 	All          map[int]*Process    // A map with all processes, keyed on UID
 	Alive        map[uint32]*Process // A map with the living processes, keyd on PID
-	TotalPhys    uint32              // Total memory installed (KB)
-	MaxPhysEver  uint32              // Maximum used physical memory ever measured (KB)
-	MinPhysEver  uint32              // Minimum used physical memory ever measured (KB)
-	LastPhys     uint32              // Last used physical memory measured (KB)
+	Phys         *PhysicalMemory     // Represents the physical memory
 	LastUpdate   time.Time           // Last time this map was updated
 	Pi           proci.Interface     // Interface for reading processes
 }
@@ -41,6 +46,7 @@ func NewProcessMap(pi proci.Interface) *ProcessMap {
 		nextUniqueID: 0,
 		All:          make(map[int]*Process),
 		Alive:        make(map[uint32]*Process),
+		Phys:         &PhysicalMemory{},
 		Pi:           pi}
 }
 
@@ -143,19 +149,23 @@ func (processMap *ProcessMap) Update() {
 		}
 	}
 
+	processMap.updatePhysicalMemory()
+}
+
+func (processMap *ProcessMap) updatePhysicalMemory() {
 	// Update the overall (physical memory)
 	memoryStatus, memstaterr := processMap.Pi.GetMemoryStatus()
 	if memstaterr != nil {
 		fmt.Println("GetMemoryStatus returned error:", memstaterr)
-		processMap.LastPhys = 0
+		processMap.Phys.LastPhys = 0
 	} else {
-		processMap.TotalPhys = uint32(memoryStatus.TotalPhys / 1024)                     // Byte to KiloByte
-		processMap.LastPhys = processMap.TotalPhys - uint32(memoryStatus.AvailPhys/1024) // Byte to KiloByte
-		if processMap.LastPhys > processMap.MaxPhysEver {
-			processMap.MaxPhysEver = processMap.LastPhys
+		processMap.Phys.TotalPhys = uint32(memoryStatus.TotalPhys / 1024) // Byte to KiloByte
+		processMap.Phys.LastPhys = processMap.Phys.TotalPhys - uint32(memoryStatus.AvailPhys/1024) // Byte to KiloByte
+		if processMap.Phys.LastPhys > processMap.Phys.MaxPhysEver {
+			processMap.Phys.MaxPhysEver = processMap.Phys.LastPhys
 		}
-		if processMap.MinPhysEver == 0 || processMap.LastPhys < processMap.MinPhysEver {
-			processMap.MinPhysEver = processMap.LastPhys
+		if processMap.Phys.MinPhysEver == 0 || processMap.Phys.LastPhys < processMap.Phys.MinPhysEver {
+			processMap.Phys.MinPhysEver = processMap.Phys.LastPhys
 		}
 	}
 }

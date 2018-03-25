@@ -87,7 +87,7 @@ func (m *Measurement) measureAndLog(addToSlowLogger bool) {
 
 	row := LogRow{
 		Time:         m.PM.LastUpdate,
-		MemUsed:      m.PM.LastPhys,
+		MemUsed:      m.PM.Phys.LastPhys,
 		LogProcesses: logProcesses}
 
 	m.FastLogger.AddRow(&row)
