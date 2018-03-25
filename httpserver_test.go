@@ -1,31 +1,22 @@
 package main
 
 import (
-	"context"
 	"github.com/midstar/proci"
-	"sync"
 	"testing"
 	"time"
 )
 
 func TestHttpServer(t *testing.T) {
 	// Creata a Measurement object and collect some data
-	mutex := sync.Mutex{}
-	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
-
-	halt := make(chan bool)
-
-	go m.MeasureLoop(200, 2, halt)
-
+	m := CreateMeasurement(20, 20, 200, 2, proci.Proci{})
+	m.StartMeasurement()
 	time.Sleep(2 * time.Second)
+	m.StopMeasurement()
 
-	// Halt the measurement loop
-	halt <- true
-
-	// Start the HTTP server
+	// Create and start the HTTP server
+	httpServer := CreateHTTPServer(9090, m)
 	t.Log("Starting HTTP server")
-	server := StartHTTPServer(9090, m)
-
+	httpServer.Start()
 	time.Sleep(3 * time.Second)
-	server.Shutdown(context.Background())
+	httpServer.Stop()
 }

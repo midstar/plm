@@ -8,36 +8,50 @@ import (
 
 // Measurement holds all measurements.
 type Measurement struct {
-	FastLogger *Logger
-	SlowLogger *Logger
-	PM         *ProcessMap
-	Mutex      *sync.Mutex // Only access this struct using this mutex
+	FastLogger    *Logger
+	SlowLogger    *Logger
+	PM            *ProcessMap
+	FastLogTimeMs int 
+	SlowLogFactor int
+	Mutex         *sync.Mutex // Only access this struct using this mutex
+	halt          chan bool   // Send to halt measurement
+	
 }
 
 // CreateMeasurement creates a new measurment object
-//
-// Parameter mutex is used to protect the Measurement struct in different
-// threads.
-func CreateMeasurement(fastLoggerSize int, slowLoggerSize int,
-	mutex *sync.Mutex, pi proci.Interface) *Measurement {
+func CreateMeasurement(fastLoggerSize int, slowLoggerSize int, 
+                       fastLogTimeMs int, slowLogFactor int,
+											 pi proci.Interface) *Measurement {
 	return &Measurement{
-		FastLogger: CreateLogger(fastLoggerSize),
-		SlowLogger: CreateLogger(slowLoggerSize),
-		PM:         NewProcessMap(pi),
-		Mutex:      mutex}
+		FastLogger:    CreateLogger(fastLoggerSize),
+		SlowLogger:    CreateLogger(slowLoggerSize),
+		PM:            NewProcessMap(pi),
+		FastLogTimeMs: fastLogTimeMs,
+		SlowLogFactor: slowLogFactor,
+		Mutex:         &sync.Mutex{},
+		halt:          make(chan bool)}
 }
 
-// MeasureLoop runs the measurement loop. Supposed to be runned as a goroutine.
+// StartMeasurement starts the measurement as a separate goroutine. 
 //
-// Parameter halt is a channel to which you can send a bool value to halt the
-// measurement loop (i.e. exit this function).
-func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int, halt chan bool) {
+// Stop the measurement with StopMeasurement.
+func (m *Measurement) StartMeasurement() {
+	go m.measureLoop()
+}
+
+// StopMeasurement stops the measurement.
+func (m *Measurement) StopMeasurement() {
+	m.halt <- true
+}
+
+// measureLoop runs the measurement loop. Supposed to be runned as a goroutine.
+func (m *Measurement) measureLoop() {
 	haltMeasurement := false
 	addToSlowLog := false
 	iter := 1
 	for !haltMeasurement {
 
-		if iter%slowLogFactor == 0 {
+		if iter%m.SlowLogFactor == 0 {
 			addToSlowLog = true
 			iter = 0
 		} else {
@@ -49,9 +63,9 @@ func (m *Measurement) MeasureLoop(fastLogTimeMs int, slowLogFactor int, halt cha
 		iter++
 
 		select {
-		case <-halt:
+		case <-m.halt:
 			haltMeasurement = true
-		case <-time.After(time.Duration(fastLogTimeMs) * time.Millisecond):
+		case <-time.After(time.Duration(m.FastLogTimeMs) * time.Millisecond):
 		}
 	}
 }

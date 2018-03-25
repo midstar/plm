@@ -2,13 +2,12 @@ package main
 
 import (
 	"github.com/midstar/proci"
-	"sync"
 	"testing"
 	"time"
 )
 
 func TestMeasurement(t *testing.T) {
-	m := CreateMeasurement(2, 4, &sync.Mutex{}, proci.Proci{})
+	m := CreateMeasurement(2, 4, 200, 3, proci.Proci{})
 
 	m.measureAndLog(false)
 	assertEqualsInt(t, "Size of FastLogger", 1, m.FastLogger.NbrRows)
@@ -28,17 +27,12 @@ func TestMeasurement(t *testing.T) {
 }
 
 func TestMeasureLoop(t *testing.T) {
-	mutex := sync.Mutex{}
-	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
-
-	halt := make(chan bool)
-
-	go m.MeasureLoop(500, 2, halt)
+	m := CreateMeasurement(20, 20, 500, 2, proci.Proci{})
+	m.StartMeasurement()
 
 	time.Sleep(3 * time.Second)
 
-	// Halt the measurement loop
-	halt <- true
+	m.StopMeasurement()
 
 	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
 	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)
@@ -48,17 +42,12 @@ func TestMeasureLoop(t *testing.T) {
 }
 
 func TestMeasureLoop2(t *testing.T) {
-	mutex := sync.Mutex{}
-	m := CreateMeasurement(20, 20, &mutex, proci.Proci{})
-
-	halt := make(chan bool)
-
-	go m.MeasureLoop(200, 3, halt)
+	m := CreateMeasurement(20, 20, 200, 3, proci.Proci{})
+	m.StartMeasurement()
 
 	time.Sleep(3 * time.Second)
 
-	// Halt the measurement loop
-	halt <- true
+	m.StopMeasurement()
 
 	t.Log("Size of Fastlogger:", m.FastLogger.NbrRows)
 	t.Log("Size of SlowLogger:", m.SlowLogger.NbrRows)

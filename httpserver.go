@@ -1,36 +1,42 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-type serverContext struct {
+type HttpServer struct {
 	measurement *Measurement
 	server      *http.Server
 }
 
+func CreateHTTPServer(port int, measurement *Measurement) *HttpServer {
+	portStr := fmt.Sprintf(":%d", port)
+	srv := &http.Server{Addr: portStr}
+	server := &HttpServer{measurement: measurement, server: srv}
+
+	http.Handle("/", server)
+	return server
+}
+
 // ServeHTTP handles incoming HTTP requests
-func (context *serverContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
-// StartHTTPServer starts the HTTP server and returns the server instance.
-// The server is stopped by calling Shutdown on the server instance.
-func StartHTTPServer(port int, measurement *Measurement) *http.Server {
-	portStr := fmt.Sprintf(":%d", port)
-	srv := &http.Server{Addr: portStr}
-
-	http.Handle("/", &serverContext{measurement: measurement, server: srv})
-
+// Start starts the HTTP server. Stop it using the Stop function.
+func (s *HttpServer) Start() {
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := s.server.ListenAndServe(); err != nil {
 			// cannot panic, because this probably is an intentional close
 			log.Printf("Httpserver: ListenAndServe() shutdown reason: %s", err)
 		}
 	}()
+}
 
-	// returning reference so caller can call Shutdown()
-	return srv
+// Stop stops the HTTP server.
+func (s *HttpServer) Stop() {
+	s.server.Shutdown(context.Background())
 }
