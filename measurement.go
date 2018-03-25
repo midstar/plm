@@ -11,17 +11,17 @@ type Measurement struct {
 	FastLogger    *Logger
 	SlowLogger    *Logger
 	PM            *ProcessMap
-	FastLogTimeMs int 
+	FastLogTimeMs int
 	SlowLogFactor int
 	Mutex         *sync.Mutex // Only access this struct using this mutex
 	halt          chan bool   // Send to halt measurement
-	
+
 }
 
 // CreateMeasurement creates a new measurment object
-func CreateMeasurement(fastLoggerSize int, slowLoggerSize int, 
-                       fastLogTimeMs int, slowLogFactor int,
-											 pi proci.Interface) *Measurement {
+func CreateMeasurement(fastLoggerSize int, slowLoggerSize int,
+	fastLogTimeMs int, slowLogFactor int,
+	pi proci.Interface) *Measurement {
 	return &Measurement{
 		FastLogger:    CreateLogger(fastLoggerSize),
 		SlowLogger:    CreateLogger(slowLoggerSize),
@@ -32,7 +32,7 @@ func CreateMeasurement(fastLoggerSize int, slowLoggerSize int,
 		halt:          make(chan bool)}
 }
 
-// Start starts the measurement as a separate goroutine. 
+// Start starts the measurement as a separate goroutine.
 //
 // Stop the measurement with Stop.
 func (m *Measurement) Start() {

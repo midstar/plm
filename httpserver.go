@@ -7,27 +7,29 @@ import (
 	"net/http"
 )
 
-type HttpServer struct {
+// HTTPServer represents the HTTP server
+type HTTPServer struct {
 	measurement *Measurement
 	server      *http.Server
 }
 
-func CreateHTTPServer(port int, measurement *Measurement) *HttpServer {
+// CreateHTTPServer creates the HTTP server. Start it with Start.
+func CreateHTTPServer(port int, measurement *Measurement) *HTTPServer {
 	portStr := fmt.Sprintf(":%d", port)
 	srv := &http.Server{Addr: portStr}
-	server := &HttpServer{measurement: measurement, server: srv}
+	server := &HTTPServer{measurement: measurement, server: srv}
 
 	http.Handle("/", server)
 	return server
 }
 
 // ServeHTTP handles incoming HTTP requests
-func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
 // Start starts the HTTP server. Stop it using the Stop function.
-func (s *HttpServer) Start() {
+func (s *HTTPServer) Start() {
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil {
 			// cannot panic, because this probably is an intentional close
@@ -37,6 +39,6 @@ func (s *HttpServer) Start() {
 }
 
 // Stop stops the HTTP server.
-func (s *HttpServer) Stop() {
+func (s *HTTPServer) Stop() {
 	s.server.Shutdown(context.Background())
 }

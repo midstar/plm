@@ -1,25 +1,26 @@
 package main
 
 import (
-	"github.com/midstar/proci"
 	"fmt"
+	"github.com/midstar/proci"
 )
 
+// PLM the PLM context
 type PLM struct {
-	httpServer  *HttpServer
+	httpServer  *HTTPServer
 	measurement *Measurement
 }
 
-// CreatePLM loads the configuration and creates the HTTP server and 
+// CreatePLM loads the configuration and creates the HTTP server and
 // measurement
 func CreatePLM() *PLM {
 	configuration := LoadConfiguration(DefaultConfigFile)
-	m := CreateMeasurement(configuration.FastLogSize, configuration.SlowLogSize, 
-	                       configuration.FastLogTimeMs, configuration.SlowLogSize, proci.Proci{})
+	m := CreateMeasurement(configuration.FastLogSize, configuration.SlowLogSize,
+		configuration.FastLogTimeMs, configuration.SlowLogSize, proci.Proci{})
 	s := CreateHTTPServer(configuration.Port, m)
 	return &PLM{
-		httpServer  : s,
-		measurement : m}
+		httpServer:  s,
+		measurement: m}
 }
 
 // Start starts the measurements and HTTP server.
@@ -48,7 +49,7 @@ func main() {
 			fmt.Println("Supported commands:")
 			fmt.Println("  exit : shutdown server and exit")
 		} else if input == "" {
-		
+
 		} else {
 			fmt.Println("Invalid command. Type 'help' for available commands")
 		}
@@ -57,12 +58,12 @@ func main() {
 	fmt.Println("Shutting down")
 	plm.Stop()
 	fmt.Println("Bye bye")
-/*	configuration := LoadConfiguration(DefaultConfigFile)
-	m := CreateMeasurement(configuration.FastLogSize, configuration.SlowLogSize, 
-	                       sync.Mutex{}, proci.Proci{})
-	
-	log.Printf("Listening to port: %d", configuration.Port)
-	portStr := fmt.Sprintf(":%d", configuration.Port)
-	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(portStr, nil))*/
+	/*	configuration := LoadConfiguration(DefaultConfigFile)
+		m := CreateMeasurement(configuration.FastLogSize, configuration.SlowLogSize,
+		                       sync.Mutex{}, proci.Proci{})
+
+		log.Printf("Listening to port: %d", configuration.Port)
+		portStr := fmt.Sprintf(":%d", configuration.Port)
+		http.HandleFunc("/", handler)
+		log.Fatal(http.ListenAndServe(portStr, nil))*/
 }
