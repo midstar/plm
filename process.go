@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/midstar/proci"
+	"path/filepath"
 	"time"
 )
 
@@ -11,7 +12,8 @@ type Process struct {
 	UID           int    // Unique ID
 	Pid           uint32 // Process PID
 	IsAlive       bool   // Is process alive?
-	Path          string // The process path (and name)
+	FullPath      string // The process path (and name)
+	Name          string // Name of the process (last part of Path)
 	CommandLine   string // The process command line
 	MaxMemoryEver uint32 // Maximum memory ever measured (KB)
 	MinMemoryEver uint32 // Minimum memory ever measured (KB)
@@ -20,10 +22,10 @@ type Process struct {
 
 // PhysicalMemory represents the physical RAM memory
 type PhysicalMemory struct {
-	TotalPhys    uint32              // Total memory installed (KB)
-	MaxPhysEver  uint32              // Maximum used physical memory ever measured (KB)
-	MinPhysEver  uint32              // Minimum used physical memory ever measured (KB)
-	LastPhys     uint32              // Last used physical memory measured (KB)
+	TotalPhys   uint32 // Total memory installed (KB)
+	MaxPhysEver uint32 // Maximum used physical memory ever measured (KB)
+	MinPhysEver uint32 // Minimum used physical memory ever measured (KB)
+	LastPhys    uint32 // Last used physical memory measured (KB)
 }
 
 // ProcessMap has two internal maps. Both maps are pointing to the
@@ -54,10 +56,11 @@ func NewProcessMap(pi proci.Interface) *ProcessMap {
 // a unique identity and put it in both the All and Alive maps. If another
 // process with the same PID exist in the All map, the old process will be
 // set to Alive = false and removed from the All list.
-func (processMap *ProcessMap) CreateProcess(pid uint32, path string, commandLine string) *Process {
+func (processMap *ProcessMap) CreateProcess(pid uint32, fullPath string, commandLine string) *Process {
 	processMap.nextUniqueID++
 	uid := processMap.nextUniqueID
-	process := Process{UID: uid, Pid: pid, IsAlive: true, Path: path, CommandLine: commandLine}
+	_, name := filepath.Split(fullPath)
+	process := Process{UID: uid, Pid: pid, IsAlive: true, FullPath: fullPath, Name: name, CommandLine: commandLine}
 	_, hasPid := processMap.Alive[pid]
 	if hasPid {
 		processMap.ProcessKilled(pid)
@@ -79,8 +82,8 @@ func (processMap *ProcessMap) ProcessKilled(pid uint32) {
 // corresponding process in the dictionary. If if a new process is detected a
 // new entry in the process map is added.
 //
-// The Pid, Path and CommandLine fields of the process are only updated if the
-// process is new.
+// The Pid, FullPath, Name and CommandLine fields of the process are only
+//updated if the process is new.
 //
 // If the process is dead it will be removed from the Alive field in ProcessMap.
 func (processMap *ProcessMap) Update() {
@@ -96,8 +99,8 @@ func (processMap *ProcessMap) Update() {
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
 		process, hasPid := processMap.Alive[pid]
-		path, patherr := processMap.Pi.GetProcessPath(pid)
-		if patherr != nil || path == "" {
+		fullPath, patherr := processMap.Pi.GetProcessPath(pid)
+		if patherr != nil || fullPath == "" {
 			// This is probably a system process that we cannot access.
 			// Pointless to track this process
 			if hasPid {
@@ -107,8 +110,8 @@ func (processMap *ProcessMap) Update() {
 			}
 			continue
 		}
-		if hasPid && path != process.Path {
-			// The path has changed. It must be a new process that has replaced
+		if hasPid && fullPath != process.FullPath {
+			// The fullPath has changed. It must be a new process that has replaced
 			// the old one.
 			processMap.ProcessKilled(pid)
 			hasPid = false
@@ -120,7 +123,7 @@ func (processMap *ProcessMap) Update() {
 				// Expected for some system processes.
 				commandLine = ""
 			}
-			process = processMap.CreateProcess(pid, path, commandLine)
+			process = processMap.CreateProcess(pid, fullPath, commandLine)
 		}
 		process.IsAlive = true
 
@@ -159,7 +162,7 @@ func (processMap *ProcessMap) updatePhysicalMemory() {
 		fmt.Println("GetMemoryStatus returned error:", memstaterr)
 		processMap.Phys.LastPhys = 0
 	} else {
-		processMap.Phys.TotalPhys = uint32(memoryStatus.TotalPhys / 1024) // Byte to KiloByte
+		processMap.Phys.TotalPhys = uint32(memoryStatus.TotalPhys / 1024)                          // Byte to KiloByte
 		processMap.Phys.LastPhys = processMap.Phys.TotalPhys - uint32(memoryStatus.AvailPhys/1024) // Byte to KiloByte
 		if processMap.Phys.LastPhys > processMap.Phys.MaxPhysEver {
 			processMap.Phys.MaxPhysEver = processMap.Phys.LastPhys

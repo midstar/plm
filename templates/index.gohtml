@@ -1,8 +1,179 @@
 <html>
   <head>
     <title>Process Load Monitor</title>
+    <style>
+    body {    
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.42857143;
+      background-color: #F6F6F6;
+    }
+    
+    .top-header {
+      background: linear-gradient(#00285c, rgba(69, 157, 238, 0.75));
+      height: 25px;
+      margin-top: 0px;
+      margin-left: 0px;
+      margin-right: 0px;
+      margin-bottom: 10px;
+      border-color: #080808;
+      border-width: 0 0 1px;
+      top: 0;
+      right: 0;
+      left: 0;
+      box-sizing: border-box;
+    }
+    
+    .title-info {
+      text-align: center;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 10px;
+      color: white;
+      padding-top: 1px;
+    }
+
+    .panel {
+      background-color: #FFFFFF;
+      margin-top: 5px;
+      margin-left: 10px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      border-style: solid;
+      border-color: #3175B0;
+      border-width: 1px;
+      border-radius:3px 3px 0px 0px;
+    }
+
+    .panel-header {
+      background-color: #3175B0;
+      height: 20px;
+      margin-top: 0px;
+      margin-left: 0px;
+      margin-right: 0px;
+      margin-bottom: 5px;
+    }
+
+    .panel-text {
+      margin-left: 30px;
+      color: white;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+      word-wrap: break-word;
+      text-align: left;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+    </style>
   </head>
   <body>
-    <h1>Process Load Monitor</h1>
+    <div class="top-header">
+      <div class="title-info">
+      PROCESS LOAD MONITOR
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-text">
+        Overview
+        </div>
+      </div>
+      <div class="panel-content">
+        Total memory: {{kb_to_mb .Phys.TotalPhys}} MB<br/>
+        Used memory: {{kb_to_mb .Phys.LastPhys}} MB<br/>
+        Max ever used: {{kb_to_mb .Phys.MaxPhysEver}} MB<br/>
+        Min ever used: {{kb_to_mb .Phys.MinPhysEver}} MB<br/>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-text">
+        Running processes
+        </div>
+      </div>
+      <div class="panel-content">
+        <table>
+          <col width="60">
+          <col width="60">
+          <col width="200">
+          <col>
+          <col width="100">
+          <col width="100">
+          <col width="100">
+          <tr>
+            <th>UID</th>
+            <th>PID</th>
+            <th>Name</th>
+            <th>Command line</th>
+            <th>Current</th>
+            <th>Max</th>
+            <th>Min</th>
+          </tr>
+          {{range .All}}
+          {{if .IsAlive}}
+          <tr>
+            <td>{{.UID}}</td>
+            <td>{{.Pid}}</td>
+            <td>{{.Name}}</td>
+            <td>{{.CommandLine}}</td>
+            <td>{{kb_to_mb .LastMemory}} MB</td>
+            <td>{{kb_to_mb .MaxMemoryEver}} MB</td>
+            <td>{{kb_to_mb .MinMemoryEver}} MB</td>
+          </tr>
+          {{end}}
+          {{end}}
+        </table>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-text">
+        Process graveyard
+        </div>
+      </div>
+      <div class="panel-content">
+        <table>
+          <col width="60">
+          <col width="60">
+          <col width="200">
+          <col>
+          <col width="100">
+          <col width="100">
+          <col width="100">
+          <tr>
+            <th>UID</th>
+            <th>PID</th>
+            <th>Name</th>
+            <th>Command line</th>
+            <th>Current</th>
+            <th>Max</th>
+            <th>Min</th>
+          </tr>
+          {{range .All}}
+          {{if not .IsAlive}}
+          <tr>
+            <td>{{.UID}}</td>
+            <td>{{.Pid}}</td>
+            <td>{{.Name}}</td>
+            <td>{{.CommandLine}}</td>
+            <td>{{kb_to_mb .LastMemory}} MB</td>
+            <td>{{kb_to_mb .MaxMemoryEver}} MB</td>
+            <td>{{kb_to_mb .MinMemoryEver}} MB</td>
+          </tr>
+          {{end}}
+          {{end}}
+        </table>
+      </div>
+    </div>
+    
   </body>
 </html>
