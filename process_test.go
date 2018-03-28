@@ -32,7 +32,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	p8 := pMap.Alive[8]
 	assertEqualsInt(t, "Process 8 PID", 8, int(p8.Pid))
-	assertEqualsStr(t, "Process 8 path", "path_8", p8.FullPath)
+	assertEqualsStr(t, "Process 8 path", "path_8", p8.Path)
 	assertEqualsStr(t, "Process 8 command line", "command_line_8", p8.CommandLine)
 	assertEqualsInt(t, "Process 8 original MemoryUsage", 1024+1024*8, int(pMock.Processes[8].MemoryUsage)) // Sanity
 	assertEqualsInt(t, "Process 8 MaxMemoryEver", 9, int(p8.MaxMemoryEver))
@@ -71,15 +71,15 @@ func TestProcessUpdate(t *testing.T) {
 	assertTrue(t, "PID P8 dead", !hasP8)
 
 	p3 := pMap.Alive[3]
-	assertEqualsStr(t, "Process 3 path", "path_3", p3.FullPath)
-	pMock.Processes[3].FullPath = "new_path_3"
+	assertEqualsStr(t, "Process 3 path", "path_3", p3.Path)
+	pMock.Processes[3].Path = "new_path_3"
 	pMap.Update()
 	assertEqualsInt(t, "Length of pMap.All", 11, len(pMap.All))
 	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
 	assertTrue(t, "New PID 3 differs from old", p3.UID != pMap.Alive[3].UID)
 
 	p2 := pMap.Alive[2]
-	pMock.Processes[2].FullPath = ""
+	pMock.Processes[2].Path = ""
 	pMap.Update()
 	assertEqualsInt(t, "Length of pMap.All", 11, len(pMap.All))
 	assertEqualsInt(t, "Length of pMap.Alive", 8, len(pMap.Alive))
@@ -87,7 +87,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	pMock.Processes[34] = &proci.ProcessMock{
 		Pid:               34,
-		FullPath:          fmt.Sprintf("path_%d", 34),
+		Path:              fmt.Sprintf("path_%d", 34),
 		CommandLine:       fmt.Sprintf("command_line_%d", 34),
 		MemoryUsage:       uint64(1024 + 34*1024),
 		DoFailPath:        false,
@@ -97,11 +97,11 @@ func TestProcessUpdate(t *testing.T) {
 	pMap.Update()
 	assertEqualsInt(t, "Length of pMap.All", 12, len(pMap.All))
 	assertEqualsInt(t, "Length of pMap.Alive", 9, len(pMap.Alive))
-	assertEqualsStr(t, "Process 34 path", "path_34", pMap.Alive[34].FullPath)
+	assertEqualsStr(t, "Process 34 path", "path_34", pMap.Alive[34].Path)
 
 	pMock.Processes[22] = &proci.ProcessMock{
 		Pid:               22,
-		FullPath:          "",
+		Path:              "",
 		CommandLine:       fmt.Sprintf("command_line_%d", 22),
 		MemoryUsage:       uint64(1024 + 22*1024),
 		DoFailPath:        false,
@@ -115,7 +115,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	pMock.Processes[23] = &proci.ProcessMock{
 		Pid:               23,
-		FullPath:          fmt.Sprintf("path_%d", 23),
+		Path:              fmt.Sprintf("path_%d", 23),
 		CommandLine:       fmt.Sprintf("command_line_%d", 23),
 		MemoryUsage:       uint64(1024 + 23*1024),
 		DoFailPath:        true,
@@ -129,7 +129,7 @@ func TestProcessUpdate(t *testing.T) {
 
 	pMock.Processes[24] = &proci.ProcessMock{
 		Pid:               24,
-		FullPath:          fmt.Sprintf("path_%d", 24),
+		Path:              fmt.Sprintf("path_%d", 24),
 		CommandLine:       fmt.Sprintf("command_line_%d", 24),
 		MemoryUsage:       uint64(1024 + 24*1024),
 		DoFailPath:        false,

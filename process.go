@@ -12,7 +12,7 @@ type Process struct {
 	UID           int    // Unique ID
 	Pid           uint32 // Process PID
 	IsAlive       bool   // Is process alive?
-	FullPath      string // The process path (and name)
+	Path          string // The process path (and name)
 	Name          string // Name of the process (last part of Path)
 	CommandLine   string // The process command line
 	MaxMemoryEver uint32 // Maximum memory ever measured (KB)
@@ -60,7 +60,7 @@ func (processMap *ProcessMap) CreateProcess(pid uint32, fullPath string, command
 	processMap.nextUniqueID++
 	uid := processMap.nextUniqueID
 	_, name := filepath.Split(fullPath)
-	process := Process{UID: uid, Pid: pid, IsAlive: true, FullPath: fullPath, Name: name, CommandLine: commandLine}
+	process := Process{UID: uid, Pid: pid, IsAlive: true, Path: fullPath, Name: name, CommandLine: commandLine}
 	_, hasPid := processMap.Alive[pid]
 	if hasPid {
 		processMap.ProcessKilled(pid)
@@ -82,7 +82,7 @@ func (processMap *ProcessMap) ProcessKilled(pid uint32) {
 // corresponding process in the dictionary. If if a new process is detected a
 // new entry in the process map is added.
 //
-// The Pid, FullPath, Name and CommandLine fields of the process are only
+// The Pid, Path, Name and CommandLine fields of the process are only
 //updated if the process is new.
 //
 // If the process is dead it will be removed from the Alive field in ProcessMap.
@@ -110,7 +110,7 @@ func (processMap *ProcessMap) Update() {
 			}
 			continue
 		}
-		if hasPid && fullPath != process.FullPath {
+		if hasPid && fullPath != process.Path {
 			// The fullPath has changed. It must be a new process that has replaced
 			// the old one.
 			processMap.ProcessKilled(pid)
