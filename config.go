@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -25,7 +26,7 @@ type Configuration struct {
 func LoadConfiguration(fileName string) *Configuration {
 	p, errprop := LoadPropertyFile(fileName)
 	if errprop != nil {
-		fmt.Println(errprop)
+		log.Println(errprop)
 	}
 	// Create configuration with default values
 	configuration := Configuration{
@@ -45,7 +46,7 @@ func getPropertyInt(properties map[string]string, key string, defaultValue int) 
 	}
 	intValue, valueerr := strconv.Atoi(value)
 	if valueerr != nil {
-		fmt.Printf("Property %s does not have a valid integer value. Using default %d\n", key, defaultValue)
+		log.Printf("Property %s does not have a valid integer value. Using default %d\n", key, defaultValue)
 		return defaultValue
 	}
 	return intValue

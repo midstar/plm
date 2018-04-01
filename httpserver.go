@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 // HTTPServer represents the HTTP server
@@ -35,9 +37,40 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveHTTPListAllProcesses(w)
 	case "/ram":
 		s.serveHTTPGetRAM(w)
+	case "/plot":
+		s.serveHTTPPlot(w, r.URL.Query())
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "This is not a valid path: %s!", r.URL.Path)
+	}
+}
+
+func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
+	funcMap := template.FuncMap{
+		// Convert KB to MB only keep one decimal
+		"kb_to_mb": func(kb uint32) string {
+			return fmt.Sprintf("%.1f", float64(kb)/1024.0)
+		},
+	}
+	uids, hasElement := values["uids"]
+	if !hasElement {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Parameter uids was not provided")
+	} else {
+		uidSlice := strings.Split(uids[0], ",")
+		//fmt.Fprintf(w, "Plotting %s", uidSlice)
+		t, err := template.New("").Funcs(funcMap).ParseFiles("templates/plot.gohtml")
+		if err != nil {
+			http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s.measurement.Mutex.Lock()
+		err = t.ExecuteTemplate(w, "plot.gohtml", uidSlice)
+		s.measurement.Mutex.Unlock()
+		if err != nil {
+			http.Error(w, "Execute template: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -53,7 +86,9 @@ func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
 		http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	s.measurement.Mutex.Lock()
 	err = t.ExecuteTemplate(w, "index.gohtml", s.measurement.PM)
+	s.measurement.Mutex.Unlock()
 	if err != nil {
 		http.Error(w, "Execute template: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -63,7 +98,7 @@ func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
 func (s *HTTPServer) serveHTTPListAllProcesses(w http.ResponseWriter) {
 	s.measurement.Mutex.Lock()
 	js, err := json.Marshal(s.measurement.PM.All)
-	s.measurement.Mutex.Unlock()
+	defer s.measurement.Mutex.Unlock()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

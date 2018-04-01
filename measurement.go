@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -103,10 +104,14 @@ func (m *Measurement) measureAndLog(addToSlowLogger bool) {
 // removeOldProcesses removes all dead processes where no log entries exists.
 func (m *Measurement) removeOldProcesses() {
 	m.Mutex.Lock()
-	oldestTime := m.SlowLogger.OldestDate()
-	for uid, process := range m.PM.All {
-		if !process.IsAlive && process.Died.Before(oldestTime) {
-			delete(m.PM.All, uid)
+	// Only remove entries if the log is full
+	if m.SlowLogger.NbrRows == m.SlowLogger.MaxRows {
+		oldestTime := m.SlowLogger.OldestDate()
+		for uid, process := range m.PM.All {
+			if !process.IsAlive && process.Died.Before(oldestTime) {
+				log.Printf("Removing process %d. Died: %s, Last entry: %s", uid, process.Died.Format(time.RFC3339), oldestTime.Format(time.RFC3339))
+				delete(m.PM.All, uid)
+			}
 		}
 	}
 	m.Mutex.Unlock()

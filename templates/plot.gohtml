@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>Process Load Monitor</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Plot a simple x / y line
+        function plot(elementId, xValues, yValues, xTitle, yTitle) {
+            plotElement = document.getElementById(elementId);
+            Plotly.plot( plotElement, [{
+            x: xValues,
+            y: yValues }], {
+            margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle} } );
+        }
+    </script>
+  </head>
+  <body onload="plot('plotdiv',[1,2,3,4], [1,2,3,4], 'ytitle', 'xtitle')">
+  PLOT TBD
+  <div id="plotdiv"></div>
+  <button onclick="plot('plotdiv',[1,2,3,4], [1,2,3,4], 'ytitle', 'xtitle')">Create plot</button>
+  </body>
+</html>
