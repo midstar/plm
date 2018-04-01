@@ -63,10 +63,10 @@
 
     table {
       border-collapse: collapse;
-      width: 100%;
       table-layout: fixed;
       word-wrap: break-word;
       text-align: left;
+      width: 100%;
       margin-left: 5px;
       margin-right: 5px;
     }
@@ -86,10 +86,42 @@
         </div>
       </div>
       <div class="panel-content">
-        Total memory: {{kb_to_mb .Phys.TotalPhys}} MB<br/>
-        Used memory: {{kb_to_mb .Phys.LastPhys}} MB<br/>
-        Max ever used: {{kb_to_mb .Phys.MaxPhysEver}} MB<br/>
-        Min ever used: {{kb_to_mb .Phys.MinPhysEver}} MB<br/>
+        <table>
+          <col width="400">
+          <col>
+          <col width="400">
+          <tr>
+            <td>
+              <table style="text-align:center;">
+                <tr>
+                  <th colspan="4">
+                  PHYSICAL MEMORY
+                  </th>
+                </tr>
+                <tr>
+                  <th>Total</th>
+                  <th>Current</th>
+                  <th>Max</th>
+                  <th>Min</th>
+                </tr>
+                <tr>
+                  <td>{{kb_to_mb .Phys.TotalPhys}} MB</td>
+                  <td>{{kb_to_mb .Phys.LastPhys}} MB</td>
+                  <td>{{kb_to_mb .Phys.MaxPhysEver}} MB</td>
+                  <td>{{kb_to_mb .Phys.MinPhysEver}} MB</td>
+                </tr>
+              </table>
+            </td>
+            <td>
+            </td>
+            <td>
+            <div style="font-weight:bold;">
+            SEARCH
+            </div>
+            <input type="text" name="search" size="50">
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
     
