@@ -71,6 +71,32 @@
       margin-right: 5px;
     }
     </style>
+    <script>
+    function filter() {
+      var searchtext = document.getElementById("searchinput").value;
+      console.log("Searching for: " + searchtext);
+      var tables = document.getElementsByClassName("process-table");
+      console.log("Number of tables: " + tables.length);
+      for(var tableIndex = 0; tableIndex < tables.length ; tableIndex++) {
+        var table = tables[tableIndex];
+        var rows = table.rows;
+        console.log("Number of rows: " + rows.length);
+        for(var rowIndex=1; rowIndex < rows.length ; rowIndex++) {
+          var row = rows[rowIndex];
+          var hideRow = true;
+          var cells = row.cells;
+          for (var cellIndex=0; cellIndex < cells.length; cellIndex++) {
+            var cell = cells[cellIndex];
+            if (cell.innerText.includes(searchtext)) {
+              hideRow = false;
+              break;
+            }
+          }
+          row.style.display = hideRow ? "none" : "table-row";
+        }
+      }
+    }
+    </script>
   </head>
   <body>
     <div class="top-header">
@@ -118,7 +144,7 @@
             <div style="font-weight:bold;">
             SEARCH
             </div>
-            <input type="text" name="search" size="50">
+            <input type="text" id="searchinput" name="search" size="50" oninput="filter()">
             </td>
           </tr>
         </table>
@@ -132,7 +158,7 @@
         </div>
       </div>
       <div class="panel-content">
-        <table>
+        <table class="process-table">
           <col width="60">
           <col width="60">
           <col width="200">
@@ -173,7 +199,7 @@
         </div>
       </div>
       <div class="panel-content">
-        <table>
+        <table class="process-table">
           <col width="60">
           <col width="60">
           <col width="200">
