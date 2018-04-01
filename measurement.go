@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/midstar/proci"
 	"sync"
 	"time"
+
+	"github.com/midstar/proci"
 )
 
 // Measurement holds all measurements.
@@ -59,6 +60,7 @@ func (m *Measurement) measureLoop() {
 		}
 
 		m.measureAndLog(addToSlowLog)
+		m.removeOldProcesses()
 
 		iter++
 
@@ -95,5 +97,17 @@ func (m *Measurement) measureAndLog(addToSlowLogger bool) {
 		m.SlowLogger.AddRow(&row)
 	}
 
+	m.Mutex.Unlock()
+}
+
+// removeOldProcesses removes all dead processes where no log entries exists.
+func (m *Measurement) removeOldProcesses() {
+	m.Mutex.Lock()
+	oldestTime := m.SlowLogger.OldestDate()
+	for uid, process := range m.PM.All {
+		if !process.IsAlive && process.Died.Before(oldestTime) {
+			delete(m.PM.All, uid)
+		}
+	}
 	m.Mutex.Unlock()
 }

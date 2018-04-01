@@ -46,3 +46,16 @@ func (l *Logger) AddRow(row *LogRow) {
 		l.NbrRows++
 	}
 }
+
+// OldestDate returns the date for the oldest log entry. If no entry exist
+// the current date is returned.
+func (l *Logger) OldestDate() time.Time {
+	if l.NbrRows == 0 {
+		return time.Now()
+	}
+	oldestIndex := l.Index
+	if oldestIndex <= l.MaxRows {
+		oldestIndex = 0
+	}
+	return l.LogRows[oldestIndex].Time
+}

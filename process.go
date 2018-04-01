@@ -2,22 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/midstar/proci"
 	"path/filepath"
 	"time"
+
+	"github.com/midstar/proci"
 )
 
 // Process represent one unique process
 type Process struct {
-	UID           int    // Unique ID
-	Pid           uint32 // Process PID
-	IsAlive       bool   // Is process alive?
-	Path          string // The process path (and name)
-	Name          string // Name of the process (last part of Path)
-	CommandLine   string // The process command line
-	MaxMemoryEver uint32 // Maximum memory ever measured (KB)
-	MinMemoryEver uint32 // Minimum memory ever measured (KB)
-	LastMemory    uint32 // Last memory measured (KB)
+	UID           int       // Unique ID
+	Pid           uint32    // Process PID
+	IsAlive       bool      // Is process alive?
+	Path          string    // The process path (and name)
+	Name          string    // Name of the process (last part of Path)
+	CommandLine   string    // The process command line
+	MaxMemoryEver uint32    // Maximum memory ever measured (KB)
+	MinMemoryEver uint32    // Minimum memory ever measured (KB)
+	LastMemory    uint32    // Last memory measured (KB)
+	Created       time.Time // When this process was created (or first seen)
+	Died          time.Time // When this process died
 }
 
 // PhysicalMemory represents the physical RAM memory
@@ -60,7 +63,14 @@ func (processMap *ProcessMap) CreateProcess(pid uint32, fullPath string, command
 	processMap.nextUniqueID++
 	uid := processMap.nextUniqueID
 	_, name := filepath.Split(fullPath)
-	process := Process{UID: uid, Pid: pid, IsAlive: true, Path: fullPath, Name: name, CommandLine: commandLine}
+	process := Process{
+		UID:         uid,
+		Pid:         pid,
+		IsAlive:     true,
+		Path:        fullPath,
+		Name:        name,
+		CommandLine: commandLine,
+		Created:     time.Now()}
 	_, hasPid := processMap.Alive[pid]
 	if hasPid {
 		processMap.ProcessKilled(pid)
@@ -74,6 +84,7 @@ func (processMap *ProcessMap) CreateProcess(pid uint32, fullPath string, command
 func (processMap *ProcessMap) ProcessKilled(pid uint32) {
 	process := processMap.Alive[pid]
 	process.IsAlive = false
+	process.Died = time.Now()
 	delete(processMap.Alive, pid)
 }
 
