@@ -17,7 +17,15 @@ type Measurement struct {
 	SlowLogFactor int
 	Mutex         *sync.Mutex // Only access this struct using this mutex
 	halt          chan bool   // Send to halt measurement
+}
 
+// ProcessMeasurements are measuremens from an individual process extracted
+// from the Measurement struct. Lengths of all arrays are the same, including
+// time. If no measurement was found for a certain time, the measured value
+// is set to 0.
+type ProcessMeasurements struct {
+	Memory map[int][]uint32 // Keyed on UID, values are all measured memory
+	Times  []time.Time      // Time values
 }
 
 // CreateMeasurement creates a new measurment object
@@ -44,6 +52,65 @@ func (m *Measurement) Start() {
 // Stop stops the measurement.
 func (m *Measurement) Stop() {
 	m.halt <- true
+}
+
+// GetProcessMeasurements "extracts" the measured values for the provided list
+// of processes (using UID as selector).
+func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
+	m.Mutex.Lock()
+	fastLogOldestTime := m.FastLogger.OldestDate()
+	maxSize := m.SlowLogger.NbrRows + m.FastLogger.NbrRows
+	pm := &ProcessMeasurements{
+		Memory: make(map[int][]uint32),
+		Times:  make([]time.Time, 0, maxSize)}
+	for _, uid := range uids {
+		_, hasElement := m.PM.All[uid]
+		if hasElement {
+			pm.Memory[uid] = make([]uint32, 0, maxSize)
+		} else {
+			log.Printf("Trying to get measurement for process with UID %d which don't exist", uid)
+		}
+	}
+
+	// Start with extracting values from the Slow Log
+	slowIndex := m.SlowLogger.OldestIndex()
+	addedRows := 0
+	for addedRows < m.SlowLogger.NbrRows {
+		row := m.SlowLogger.LogRows[slowIndex]
+		if row.Time == fastLogOldestTime || row.Time.After(fastLogOldestTime) {
+			// Continue with the fast log
+			break
+		}
+		pm.Times = append(pm.Times, row.Time)
+		for uid := range pm.Memory {
+			pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+		}
+		addedRows++
+		slowIndex++
+		if slowIndex == m.SlowLogger.MaxRows {
+			// Wrap of log
+			slowIndex = 0
+		}
+	}
+
+	// Continue extract from the fast log
+	fastIndex := m.FastLogger.OldestIndex()
+	addedRows = 0
+	for addedRows < m.FastLogger.NbrRows {
+		row := m.FastLogger.LogRows[fastIndex]
+		pm.Times = append(pm.Times, row.Time)
+		for uid := range pm.Memory {
+			pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+		}
+		addedRows++
+		fastIndex++
+		if fastIndex == m.FastLogger.MaxRows {
+			// Wrap of log
+			fastIndex = 0
+		}
+	}
+	m.Mutex.Unlock()
+	return pm
 }
 
 // measureLoop runs the measurement loop. Supposed to be runned as a goroutine.

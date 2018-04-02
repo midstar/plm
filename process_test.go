@@ -3,9 +3,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/midstar/proci"
 	"runtime/debug"
 	"testing"
+
+	"github.com/midstar/proci"
 )
 
 func assertTrue(t *testing.T, message string, check bool) {
@@ -21,6 +22,15 @@ func assertEqualsInt(t *testing.T, message string, expected int, actual int) {
 
 func assertEqualsStr(t *testing.T, message string, expected string, actual string) {
 	assertTrue(t, fmt.Sprintf("%s\nExpected: %s, Actual: %s", message, expected, actual), expected == actual)
+}
+
+func assertEqualsSlice(t *testing.T, message string, expected []uint32, actual []uint32) {
+	assertEqualsInt(t, fmt.Sprintf("%s\nSize missmatch", message), len(expected), len(actual))
+	for index, expvalue := range expected {
+		actvalue := actual[index]
+		assertTrue(t, fmt.Sprintf("%s\nIndex %d - Expected: %d, Actual: %d", message, index, expvalue,
+			actvalue), expvalue == actvalue)
+	}
 }
 
 func TestProcessUpdate(t *testing.T) {

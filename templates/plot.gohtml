@@ -11,11 +11,43 @@
             y: yValues }], {
             margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle} } );
         }
+
+    // Plot multipe lines
+    function plotLines(elementId, xValues, yValueLists, xTitle, yTitle, lineNames) {
+        plotElement = document.getElementById(elementId);
+        
+        var lineColors = ['rgb(0, 0, 204)', 'rgb(255, 0, 0)'];
+        
+        var data = [];
+        for (i = 0; i < yValueLists.length; i++) { 
+            var trace = {
+                x: xValues,
+                y: yValueLists[i],
+                name: lineNames[i],
+                mode: 'lines',
+                type: 'scatter',
+                line: {
+                    color: lineColors[i],
+                    width: 3
+                }
+            };
+            data.push(trace);
+        }
+        
+        layout = { margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle} }
+
+        Plotly.newPlot(plotElement, data, layout);
+    }
+
+    function doPlot() {
+        plotLines('plotdiv2', [1,2,3,4], [[1,2,3,4],[4,3,2,1]], 'xtitle', 'ytitle', ['up','down']);
+    }
     </script>
   </head>
   <body onload="plot('plotdiv',[1,2,3,4], [1,2,3,4], 'ytitle', 'xtitle')">
   PLOT TBD
   <div id="plotdiv"></div>
-  <button onclick="plot('plotdiv',[1,2,3,4], [1,2,3,4], 'ytitle', 'xtitle')">Create plot</button>
+  <button onclick="doPlot()">Create plot</button>
+  <div id="plotdiv2"></div>
   </body>
 </html>

@@ -35,6 +35,17 @@ func CreateLogger(size int) *Logger {
 		Index:   0}
 }
 
+// GetMemUsed returns memory used for a specific process. If process is not
+// listed 0 is returned.
+func (lr *LogRow) GetMemUsed(uid int) uint32 {
+	for _, logProcess := range lr.LogProcesses {
+		if logProcess.UID == uid {
+			return logProcess.MemUsed
+		}
+	}
+	return 0
+}
+
 // AddRow adds a new row to the logger
 func (l *Logger) AddRow(row *LogRow) {
 	l.LogRows[l.Index] = row
@@ -47,15 +58,26 @@ func (l *Logger) AddRow(row *LogRow) {
 	}
 }
 
+// OldestIndexGet the index of the oldest entry. -1 if
+// no entries exist.
+func (l *Logger) OldestIndex() int {
+	if l.NbrRows == 0 {
+		return -1
+	}
+	oldestIndex := l.Index
+	if l.NbrRows < l.MaxRows {
+		// No wrap yet, oldest is the first element
+		oldestIndex = 0
+	}
+	return oldestIndex
+}
+
 // OldestDate returns the date for the oldest log entry. If no entry exist
 // the current date is returned.
 func (l *Logger) OldestDate() time.Time {
-	if l.NbrRows == 0 {
+	oldestIndex := l.OldestIndex()
+	if oldestIndex == -1 {
 		return time.Now()
-	}
-	oldestIndex := l.Index
-	if oldestIndex <= l.MaxRows {
-		oldestIndex = 0
 	}
 	return l.LogRows[oldestIndex].Time
 }
