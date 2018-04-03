@@ -26,7 +26,20 @@ func CreateHTTPServer(port int, measurement *Measurement) *HTTPServer {
 		"kb_to_mb": func(kb uint32) string {
 			return fmt.Sprintf("%.1f", float64(kb)/1024.0)
 		},
-	}
+
+		// Convert KB to MB only keep one decimal
+		"int_to_str": func(v int) string {
+			return fmt.Sprintf("%d", v)
+		},
+
+		// Convert an array of kily bytes to megabytes. Keep one decimal.
+		"slice_kb_to_mb": func(kb_values []uint32) []float64 {
+			mbValues := make([]float64, len(kb_values))
+			for i := 0; i < len(kb_values); i++ {
+				mbValues[i] = float64(kb_values[i]/512) / 2
+			}
+			return mbValues
+		}}
 	portStr := fmt.Sprintf(":%d", port)
 	srv := &http.Server{Addr: portStr}
 	server := &HTTPServer{measurement: measurement, server: srv, fm: funcMap}
@@ -100,8 +113,17 @@ func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
 		http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	type MeasAndProcesses struct {
+		Measurements *ProcessMeasurements
+		Processes    map[int]*Process
+	}
+	measAndProcesses := MeasAndProcesses{Processes: make(map[int]*Process)}
+	measAndProcesses.Measurements = s.measurement.GetProcessMeasurements(uids) // Thread safe
 	s.measurement.Mutex.Lock()
-	err = t.ExecuteTemplate(w, "plot.gohtml", uids)
+	for uid := range measAndProcesses.Measurements.Memory {
+		measAndProcesses.Processes[uid] = s.measurement.PM.All[uid]
+	}
+	err = t.ExecuteTemplate(w, "plot.gohtml", measAndProcesses)
 	s.measurement.Mutex.Unlock()
 	if err != nil {
 		http.Error(w, "Execute template: "+err.Error(), http.StatusInternalServerError)

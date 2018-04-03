@@ -3,51 +3,85 @@
     <title>Process Load Monitor</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
-        // Plot a simple x / y line
-        function plot(elementId, xValues, yValues, xTitle, yTitle) {
-            plotElement = document.getElementById(elementId);
-            Plotly.plot( plotElement, [{
-            x: xValues,
-            y: yValues }], {
-            margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle} } );
+
+
+    function plotAll() {
+        var times = {{.Measurements.Times}};
+        var processes = {};
+        {{range $uid, $values := .Measurements.Memory}}
+        processes[{{int_to_str $uid}}] = {};
+        processes[{{int_to_str $uid}}]["data"]={{slice_kb_to_mb $values}};
+        {{end}}
+
+        {{range $uid, $value := .Processes}}
+        processes[{{int_to_str $uid}}]["name"]={{$value.Name}};
+        processes[{{int_to_str $uid}}]["commandLine"]={{$value.CommandLine}};
+        {{end}}
+
+        var xValues = [];
+        var xLineNames = [];
+        var i = 0;
+        for (var property in processes) {
+            if (processes.hasOwnProperty(property)) {
+                xValues[i] = processes[property]["data"];
+                xLineNames[i] = processes[property]["name"];
+                if (processes[property]["name"] != processes[property]["commandLine"]) {
+                     xLineNames[i] += "<br>" + breakString(processes[property]["commandLine"], 50);
+                }
+                i++;
+            }
         }
+        plotLines('plotarea', times, xValues, 'Time', 'Memory (MB)', xLineNames);
+
+    }
+
+    function randomColor() {
+        var r = Math.floor((Math.random() * 255));
+        var g = Math.floor((Math.random() * 255));
+        var b = Math.floor((Math.random() * 255));
+        return "rgb(" + r + "," + g + "," + b + ")";
+    }
+
+    function breakString(str, length) {
+        var s = str.match(new RegExp('.{1,' + length + '}', 'g'));
+        return s.join("<br>")
+    }
 
     // Plot multipe lines
     function plotLines(elementId, xValues, yValueLists, xTitle, yTitle, lineNames) {
         plotElement = document.getElementById(elementId);
         
-        var lineColors = ['rgb(0, 0, 204)', 'rgb(255, 0, 0)'];
-        
         var data = [];
+        var highestY = 0;
         for (i = 0; i < yValueLists.length; i++) { 
+            randomColor();
+            for (j = 0; j < yValueLists[i].length ; j++) {
+                if (yValueLists[i][j] > highestY) {
+                    highestY = yValueLists[i][j];
+                }
+            }
+
             var trace = {
                 x: xValues,
                 y: yValueLists[i],
-                name: lineNames[i],
+                name: lineNames[i], 
                 mode: 'lines',
                 type: 'scatter',
                 line: {
-                    color: lineColors[i],
+                    color: randomColor(),
                     width: 3
                 }
             };
             data.push(trace);
         }
         
-        layout = { margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle} }
+        layout = { showlegend: true, margin: { t: 0 }, xaxis: { title: xTitle}, yaxis: { title: yTitle, range: [0, highestY + 1]} }
 
         Plotly.newPlot(plotElement, data, layout);
     }
-
-    function doPlot() {
-        plotLines('plotdiv2', [1,2,3,4], [[1,2,3,4],[4,3,2,1]], 'xtitle', 'ytitle', ['up','down']);
-    }
     </script>
   </head>
-  <body onload="plot('plotdiv',[1,2,3,4], [1,2,3,4], 'ytitle', 'xtitle')">
-  PLOT TBD
-  <div id="plotdiv"></div>
-  <button onclick="doPlot()">Create plot</button>
-  <div id="plotdiv2"></div>
+  <body onload="plotAll()">
+    <div id="plotarea" style="height:800px;"></div>
   </body>
 </html>

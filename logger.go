@@ -58,7 +58,7 @@ func (l *Logger) AddRow(row *LogRow) {
 	}
 }
 
-// OldestIndexGet the index of the oldest entry. -1 if
+// OldestIndex gets the index of the oldest entry. -1 if
 // no entries exist.
 func (l *Logger) OldestIndex() int {
 	if l.NbrRows == 0 {
