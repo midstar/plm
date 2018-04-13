@@ -19,6 +19,7 @@ install:
   - go env
   - go get github.com\mattn\goveralls
   - go get github.com\midstar\proci
+  - go get github.com\kardianos\service
  
 build_script:
   - go build github.com\midstar\plm
