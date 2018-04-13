@@ -18,7 +18,6 @@ install:
   - go version
   - go env
   - go get github.com\mattn\goveralls
-  - go get gopkg.in\natefinch\lumberjack.v2
   - go get github.com\midstar\proci
  
 build_script:

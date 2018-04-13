@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -17,10 +18,11 @@ type HTTPServer struct {
 	measurement *Measurement
 	server      *http.Server
 	fm          *template.FuncMap
+	basePath    string
 }
 
 // CreateHTTPServer creates the HTTP server. Start it with Start.
-func CreateHTTPServer(port int, measurement *Measurement) *HTTPServer {
+func CreateHTTPServer(basePath string, port int, measurement *Measurement) *HTTPServer {
 	funcMap := &template.FuncMap{
 		// Convert KB to MB only keep one decimal
 		"kb_to_mb": func(kb uint32) string {
@@ -42,7 +44,10 @@ func CreateHTTPServer(port int, measurement *Measurement) *HTTPServer {
 		}}
 	portStr := fmt.Sprintf(":%d", port)
 	srv := &http.Server{Addr: portStr}
-	server := &HTTPServer{measurement: measurement, server: srv, fm: funcMap}
+	server := &HTTPServer{
+		basePath:    basePath,
+		measurement: measurement,
+		server:      srv, fm: funcMap}
 
 	http.Handle("/", server)
 	return server
@@ -108,7 +113,8 @@ func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
 		http.Error(w, uidsError.Error(), http.StatusBadRequest)
 		return
 	}
-	t, err := template.New("").Funcs(*s.fm).ParseFiles("templates/plot.gohtml")
+	templateFile := filepath.Join(s.basePath, "templates", "plot.gohtml")
+	t, err := template.New("").Funcs(*s.fm).ParseFiles(templateFile)
 	if err != nil {
 		http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -133,7 +139,8 @@ func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
 }
 
 func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
-	t, err := template.New("").Funcs(*s.fm).ParseFiles("templates/index.gohtml")
+	templateFile := filepath.Join(s.basePath, "templates", "index.gohtml")
+	t, err := template.New("").Funcs(*s.fm).ParseFiles(templateFile)
 	if err != nil {
 		http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
 		return

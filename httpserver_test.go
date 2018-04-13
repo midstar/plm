@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/midstar/proci"
 	"testing"
 	"time"
+
+	"github.com/midstar/proci"
 )
 
 func TestHttpServer(t *testing.T) {
@@ -14,7 +15,7 @@ func TestHttpServer(t *testing.T) {
 	m.Stop()
 
 	// Create and start the HTTP server
-	httpServer := CreateHTTPServer(9090, m)
+	httpServer := CreateHTTPServer("", 9090, m)
 	t.Log("Starting HTTP server")
 	httpServer.Start()
 	time.Sleep(3 * time.Second)
