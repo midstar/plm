@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/midstar/proci"
@@ -48,35 +47,3 @@ func (plm *PLM) Stop() {
 	plm.measurement.Stop()
 }
 
-func main() {
-	plm := CreatePLM()
-	plm.Start()
-	fmt.Printf("PLM is running on port %d. Enter 'exit' to shutdown and exit.\n", plm.Config.Port)
-	fmt.Print(": ")
-	var input string
-	for true {
-		fmt.Scanln(&input)
-		if input == "exit" {
-			break
-		} else if input == "help" {
-			fmt.Println("Supported commands:")
-			fmt.Println("  exit : shutdown server and exit")
-		} else if input == "" {
-
-		} else {
-			fmt.Println("Invalid command. Type 'help' for available commands")
-		}
-		fmt.Print(": ")
-	}
-	fmt.Println("Shutting down")
-	plm.Stop()
-	fmt.Println("Bye bye")
-	/*	configuration := LoadConfiguration(DefaultConfigFile)
-		m := CreateMeasurement(configuration.FastLogSize, configuration.SlowLogSize,
-		                       sync.Mutex{}, proci.Proci{})
-
-		log.Printf("Listening to port: %d", configuration.Port)
-		portStr := fmt.Sprintf(":%d", configuration.Port)
-		http.HandleFunc("/", handler)
-		log.Fatal(http.ListenAndServe(portStr, nil))*/
-}
