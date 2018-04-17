@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/midstar/proci"
@@ -86,6 +87,21 @@ func (processMap *ProcessMap) ProcessKilled(pid uint32) {
 	process.IsAlive = false
 	process.Died = time.Now()
 	delete(processMap.Alive, pid)
+}
+
+// GetUIDs returns a slice with UIDs of processes that match the matcher
+// parameter in path, name OR commandLine. All processes, including
+// dead are searched.
+func (processMap *ProcessMap) GetUIDs(matcher string) []int {
+	result := make([]int, 0, len(processMap.All))
+	for uid, process := range processMap.All {
+		if strings.Contains(process.Path, matcher) ||
+			strings.Contains(process.Name, matcher) ||
+			strings.Contains(process.CommandLine, matcher) {
+			result = append(result, uid)
+		}
+	}
+	return result
 }
 
 // Update starts with setting living processes to IsAlive = false, then it will

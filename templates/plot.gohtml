@@ -25,7 +25,7 @@
             if (processes.hasOwnProperty(property)) {
                 xValues[i] = processes[property]["data"];
                 xLineNames[i] = processes[property]["name"];
-                if (processes[property]["name"] != processes[property]["commandLine"]) {
+                if (processes[property]["name"] != processes[property]["commandLine"] && processes[property]["commandLine"] != "") {
                      xLineNames[i] += "<br>" + breakString(processes[property]["commandLine"], 50);
                 }
                 i++;

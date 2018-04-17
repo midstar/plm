@@ -55,29 +55,72 @@ func CreateHTTPServer(basePath string, port int, measurement *Measurement) *HTTP
 
 // ServeHTTP handles incoming HTTP requests
 func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
-		//http.ServeFile(w, r, "templates/index.gohtml")
+	segments := strings.Split(r.URL.Path, "/")
+	req := fmt.Sprintf("%s %s", r.Method, segments[1])
+	switch req {
+	case "GET ":
 		s.serveHTTPIndex(w)
-	case "/processes":
-		s.serveHTTPListAllProcesses(w)
-	case "/ram":
+	case "GET processes":
+		s.serveHTTPListProcesses(w, r.URL.Query())
+	case "GET ram":
 		s.serveHTTPGetRAM(w)
-	case "/plot":
+	case "GET plot":
 		s.serveHTTPPlot(w, r.URL.Query())
-	case "/measurements":
+	case "GET measurements":
 		s.serveHTTPMeasurements(w, r.URL.Query())
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "This is not a valid path: %s!", r.URL.Path)
+		fmt.Fprintf(w, "This is not a valid path: %s or method %s!", r.URL.Path, r.Method)
 	}
 }
 
-// getUIDs parses the uid query parameter and returns a slice of UIDs.
-func getUIDs(values url.Values) ([]int, error) {
+// getUIDs is a function that identifies if the URL includes any of follwoing
+// query parameters:
+//  - uids (list of uids, example uids=12,42,1234)
+//  - match (match text, example match=myprocess.exe)
+//
+// If none of the above query pararameters where listed it is assumed that all
+// UIDs shall be used.
+//
+// It is not possible to combine the above parameters.
+//
+// Returns a list of uids and error.
+func (s *HTTPServer) getUIDs(values url.Values) ([]int, error) {
+	// First check query parameter
+	uids, err := parseQueryUIDs(values)
+	if err != nil {
+		return uids, err
+	}
+	if uids != nil {
+		return uids, nil
+	}
+
+	// If not given, check the match parameter
+	uids, err = s.parseQueryMatch(values)
+	if err != nil {
+		return uids, err
+	}
+	if uids != nil {
+		return uids, nil
+	}
+
+	// If none given, return all uids
+	s.measurement.Mutex.Lock()
+	defer s.measurement.Mutex.Unlock()
+	uids = make([]int, 0, len(s.measurement.PM.All))
+	for uid := range s.measurement.PM.All {
+		uids = append(uids, uid)
+	}
+
+	return uids, nil
+}
+
+// parseQueryUIDs parses the uids query parameter and returns a slice of UIDs.
+// If the uids parameter is not provided nil will be returned.
+func parseQueryUIDs(values url.Values) ([]int, error) {
 	uids, hasElement := values["uids"]
 	if !hasElement {
-		return make([]int, 0), fmt.Errorf("Parameter uids was not provided")
+		return nil, nil
 	}
 	uidSlice := strings.Split(uids[0], ",")
 	uidsInt := make([]int, 0, len(uidSlice))
@@ -91,10 +134,25 @@ func getUIDs(values url.Values) ([]int, error) {
 	return uidsInt, nil
 }
 
+// parseQueryMatch parses the match query parameter and returns a slice of UIDs.
+// If the match parameter is not provided nil will be returned.
+func (s *HTTPServer) parseQueryMatch(values url.Values) ([]int, error) {
+	match, hasElement := values["match"]
+	if !hasElement {
+		return nil, nil
+	}
+	s.measurement.Mutex.Lock()
+	defer s.measurement.Mutex.Unlock()
+
+	// Filter out processes that match
+	uids := s.measurement.PM.GetUIDs(match[0])
+	return uids, nil
+}
+
 func (s *HTTPServer) serveHTTPMeasurements(w http.ResponseWriter, values url.Values) {
-	uids, uidsError := getUIDs(values)
-	if uidsError != nil {
-		http.Error(w, uidsError.Error(), http.StatusBadRequest)
+	uids, err := s.getUIDs(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	measurements := s.measurement.GetProcessMeasurements(uids) // Thread safe
@@ -108,9 +166,9 @@ func (s *HTTPServer) serveHTTPMeasurements(w http.ResponseWriter, values url.Val
 }
 
 func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
-	uids, uidsError := getUIDs(values)
-	if uidsError != nil {
-		http.Error(w, uidsError.Error(), http.StatusBadRequest)
+	uids, err := s.getUIDs(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	templateFile := filepath.Join(s.basePath, "templates", "plot.gohtml")
@@ -154,10 +212,26 @@ func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
 	}
 }
 
-func (s *HTTPServer) serveHTTPListAllProcesses(w http.ResponseWriter) {
+func (s *HTTPServer) serveHTTPListProcesses(w http.ResponseWriter, values url.Values) {
+
+	uids, err := s.getUIDs(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	s.measurement.Mutex.Lock()
-	js, err := json.Marshal(s.measurement.PM.All)
 	defer s.measurement.Mutex.Unlock()
+
+	processes := make(map[int]*Process)
+	for _, uid := range uids {
+		process, hasElement := s.measurement.PM.All[uid]
+		if hasElement {
+			processes[uid] = process
+		}
+	}
+
+	js, err := json.Marshal(processes)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

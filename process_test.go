@@ -180,3 +180,55 @@ func TestProcessUpdate(t *testing.T) {
 	assertEqualsInt(t, "Size of pMap.Phys.LastPhys", 0*1024*1024, int(pMap.Phys.LastPhys))
 
 }
+
+func TestGetUIDs(t *testing.T) {
+	p1 := Process{
+		Pid:         1,
+		Path:        "c/path/to/process1",
+		Name:        "process1",
+		CommandLine: "process1 -arg1=3 -arg2=4"}
+	p2 := Process{
+		Pid:         2,
+		Path:        "c/path/to/process2",
+		Name:        "process2",
+		CommandLine: "process2 -arg1A=3 -arg2=4"}
+	p3 := Process{
+		Pid:         3,
+		Path:        "c/path/to/process3",
+		Name:        "process3",
+		CommandLine: "process3 -arg1A=3 -arg2A=4"}
+	pm := NewProcessMap(proci.GenerateMock(0))
+	pm.All[1] = &p1
+	pm.All[2] = &p2
+	pm.All[3] = &p3
+
+	result := pm.GetUIDs("process2")
+	contains(t, result, 2)
+
+	result = pm.GetUIDs("c/path/to")
+	contains(t, result, 1, 2, 3)
+
+	result = pm.GetUIDs("c/path/to/process3")
+	contains(t, result, 3)
+
+	result = pm.GetUIDs("-arg2=4")
+	contains(t, result, 1, 2)
+}
+
+func contains(t *testing.T, returnedUids []int, expectedUids ...int) {
+	if len(returnedUids) != len(expectedUids) {
+		t.Fatal("Lengths don't match!")
+	}
+	for _, uid := range expectedUids {
+		found := false
+		for _, uid2 := range returnedUids {
+			if uid == uid2 {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatal("UID ", uid, " was expected but not returned")
+		}
+	}
+}
