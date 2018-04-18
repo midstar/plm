@@ -135,6 +135,7 @@ func parseQueryUIDs(values url.Values) ([]int, error) {
 }
 
 // parseQueryMatch parses the match query parameter and returns a slice of UIDs.
+// More than one match parameters might be added and will be interpreted as OR.
 // If the match parameter is not provided nil will be returned.
 func (s *HTTPServer) parseQueryMatch(values url.Values) ([]int, error) {
 	match, hasElement := values["match"]
@@ -145,7 +146,22 @@ func (s *HTTPServer) parseQueryMatch(values url.Values) ([]int, error) {
 	defer s.measurement.Mutex.Unlock()
 
 	// Filter out processes that match
-	uids := s.measurement.PM.GetUIDs(match[0])
+	uids := make([]int, 0, len(s.measurement.PM.All))
+	for _, m := range match {
+		uidsTmp := s.measurement.PM.GetUIDs(m)
+		for _, uid := range uidsTmp {
+			hasUID := false
+			for _, uid2 := range uids {
+				if uid == uid2 {
+					hasUID = true
+					break
+				}
+			}
+			if !hasUID {
+				uids = append(uids, uid)
+			}
+		}
+	}
 	return uids, nil
 }
 
