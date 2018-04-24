@@ -18,6 +18,7 @@ func printUsage() {
 	fmt.Printf("\n Commands:\n")
 	fmt.Printf("  help   Help for a command\n")
 	fmt.Printf("  plot   Download plot for one or more processes\n")
+	fmt.Printf("  info   List info about one or more processes\n")
 }
 
 func printUsageCommand(command string) {
@@ -32,6 +33,13 @@ func printUsageCommand(command string) {
 		fmt.Printf("Usage: plmc [options] plot <filename>\n\n")
 		fmt.Printf(" Options:\n")
 		fmt.Printf("  -m <string>   Plot all processes matching the string.\n")
+	case "info":
+		fmt.Printf("List process info.\n")
+		fmt.Printf("By default all processes are listed. Can be resttricted\n")
+		fmt.Printf("with options described below\n\n")
+		fmt.Printf("Usage: plmc [options] info\n\n")
+		fmt.Printf(" Options:\n")
+		fmt.Printf("  -m <string>   List all processes matching the string.\n")
 	default:
 		fmt.Fprintf(os.Stderr, "No such command %s\n\n", command)
 		printUsage()
@@ -82,6 +90,11 @@ func main() {
 			invalidUsageCommand(fmt.Sprintf("plot takes 1 argument but %d given!", flag.NArg()-1), command)
 		}
 		err = CmdPlot(flag.Arg(1))
+	case "info":
+		if flag.NArg() != 1 {
+			invalidUsageCommand(fmt.Sprintf("info takes no argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdInfo()
 	default:
 		invalidUsage(fmt.Sprintf("Invalid command '%s'!", command))
 	}
