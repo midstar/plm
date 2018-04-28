@@ -5,12 +5,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
+func processFilters() string {
+	queryParams := url.Values{}
+	if Matcher != "" {
+		queryParams.Add("match", Matcher)
+	}
+	if UIDs != "" {
+		queryParams.Add("uids", UIDs)
+	}
+	if len(queryParams) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("?%s", queryParams.Encode())
+}
+
 // CmdPlot get plot for one or more processes
 func CmdPlot(filename string) error {
-	resp, err := http.Get(fmt.Sprintf("%s/plot", PLMUrl))
+	resp, err := http.Get(fmt.Sprintf("%s/plot%s", PLMUrl, processFilters()))
 	if err != nil {
 		return err
 	}
@@ -44,7 +59,7 @@ type Process struct {
 
 // CmdInfo list info about for one or more processes
 func CmdInfo() error {
-	resp, err := http.Get(fmt.Sprintf("%s/processes", PLMUrl))
+	resp, err := http.Get(fmt.Sprintf("%s/processes%s", PLMUrl, processFilters()))
 	if err != nil {
 		return err
 	}
@@ -67,9 +82,9 @@ func CmdInfo() error {
 		fmt.Println("Name:         ", process.Name)
 		fmt.Println("Path:         ", process.Path)
 		fmt.Println("Command line: ", process.CommandLine)
-		fmt.Println("Max memory:   ", process.MaxMemoryEver, " KB")
-		fmt.Println("Min memory:   ", process.MinMemoryEver, " KB")
-		fmt.Println("Last memory:  ", process.LastMemory, " KB")
+		fmt.Println("Max memory:   ", process.MaxMemoryEver, "KB")
+		fmt.Println("Min memory:   ", process.MinMemoryEver, "KB")
+		fmt.Println("Last memory:  ", process.LastMemory, "KB")
 		fmt.Println("First seen:   ", process.Created)
 		fmt.Println("Is alive:     ", process.IsAlive)
 		if !process.IsAlive {

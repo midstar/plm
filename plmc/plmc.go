@@ -9,12 +9,18 @@ import (
 // PLMUrl to PLM server (daemon)
 var PLMUrl string
 
+// Matcher matcher -m flag
+var Matcher string
+
+// UIDs uid -u flag
+var UIDs string
+
 func printUsage() {
 	fmt.Printf("usage: plmc [options] <command> [<args>]\n\n")
 	fmt.Printf(" General options:\n")
 	fmt.Printf("  -h   Help (overview)\n")
 	fmt.Printf("  -v   Display version\n")
-	fmt.Printf("  -u   PLM server (daemon) URL. Default http://localhost:12124\n")
+	fmt.Printf("  -a   PLM server (daemon) URL address. Default http://localhost:12124\n")
 	fmt.Printf("\n Commands:\n")
 	fmt.Printf("  help   Help for a command\n")
 	fmt.Printf("  plot   Download plot for one or more processes\n")
@@ -32,18 +38,28 @@ func printUsageCommand(command string) {
 		fmt.Printf("with options described below\n\n")
 		fmt.Printf("Usage: plmc [options] plot <filename>\n\n")
 		fmt.Printf(" Options:\n")
-		fmt.Printf("  -m <string>   Plot all processes matching the string.\n")
+		printProcessFilterFlags()
 	case "info":
 		fmt.Printf("List process info.\n")
 		fmt.Printf("By default all processes are listed. Can be resttricted\n")
 		fmt.Printf("with options described below\n\n")
 		fmt.Printf("Usage: plmc [options] info\n\n")
 		fmt.Printf(" Options:\n")
-		fmt.Printf("  -m <string>   List all processes matching the string.\n")
+		printProcessFilterFlags()
 	default:
 		fmt.Fprintf(os.Stderr, "No such command %s\n\n", command)
 		printUsage()
 	}
+}
+
+func printProcessFilterFlags() {
+	fmt.Printf("  -m <string>   List all processes matching the string. To insert\n")
+	fmt.Printf("                space surround your match with \". For example\n")
+	fmt.Printf("                -m \"myprocess.exe -param 3\"\n")
+	fmt.Printf("  -u <int>      List process with matching UID. More than\n")
+	fmt.Printf("                one UID can be entered in a comma separated\n")
+	fmt.Printf("                list. For example -u 3,6,7\n")
+
 }
 
 func invalidUsage(why string) {
@@ -62,7 +78,9 @@ func invalidUsageCommand(why string, command string) {
 
 func main() {
 	var version = flag.Bool("v", false, "Display version")
-	flag.StringVar(&PLMUrl, "u", "http://localhost:12124", "PLM server URL")
+	flag.StringVar(&PLMUrl, "a", "http://localhost:12124", "PLM server address")
+	flag.StringVar(&Matcher, "m", "", "Matcher(s)")
+	flag.StringVar(&UIDs, "u", "", "UID(s)")
 	flag.Usage = printUsage
 	flag.Parse()
 
