@@ -74,7 +74,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getUIDs is a function that identifies if the URL includes any of follwoing
+// getUIDs is a function that identifies if the URL includes any of follwowing
 // query parameters:
 //  - uids (list of uids, example uids=12,42,1234)
 //  - match (match text, example match=myprocess.exe)

@@ -25,7 +25,7 @@ func TestConfig(t *testing.T) {
 
 func TestConfigInvalidFile(t *testing.T) {
 	config := LoadConfiguration("dont_exist.properties")
-	assertEqualsInt(t, "config.Port", 9090, config.Port)
+	assertEqualsInt(t, "config.Port", 12124, config.Port)
 	assertEqualsInt(t, "config.FastLogTimeMs", 3000, config.FastLogTimeMs)
 	assertEqualsInt(t, "config.SlowLogFactor", 20, config.SlowLogFactor)
 	assertEqualsInt(t, "config.FastLogSize", 1200, config.FastLogSize)

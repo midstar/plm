@@ -21,6 +21,10 @@ func respToString(response io.ReadCloser) string {
 }
 
 func TestHttpServer(t *testing.T) {
+	// We need to clear default serve mux if http handler is called
+	// more than once. We do run it serveral times in the unit tests.
+	http.DefaultServeMux = new(http.ServeMux)
+
 	port := 9090
 	baseURL := fmt.Sprintf("http://localhost:%d", port)
 

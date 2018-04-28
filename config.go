@@ -30,7 +30,7 @@ func LoadConfiguration(fileName string) *Configuration {
 	}
 	// Create configuration with default values
 	configuration := Configuration{
-		Port:          getPropertyInt(p, "port", 9090),
+		Port:          getPropertyInt(p, "port", 12124),
 		FastLogTimeMs: getPropertyInt(p, "fastLogTimeMs", 3000),
 		SlowLogFactor: getPropertyInt(p, "slowLogFactor", 20),
 		FastLogSize:   getPropertyInt(p, "fastLogSize", 1200),
