@@ -54,9 +54,10 @@ func (m *Measurement) Stop() {
 	m.halt <- true
 }
 
-// GetProcessMeasurements "extracts" the measured values for the provided list
-// of processes (using UID as selector).
-func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
+// GetProcessMeasurementsBetween same as GetProcessMeasurements but only extracts
+// measuared values between from and to.
+// If from and/or to are set to zero values (default) no restriction is set.
+func (m *Measurement) GetProcessMeasurementsBetween(uids []int, from time.Time, to time.Time) *ProcessMeasurements {
 	m.Mutex.Lock()
 	fastLogOldestTime := m.FastLogger.OldestDate()
 	maxSize := m.SlowLogger.NbrRows + m.FastLogger.NbrRows
@@ -74,18 +75,21 @@ func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
 
 	// Start with extracting values from the Slow Log
 	slowIndex := m.SlowLogger.OldestIndex()
-	addedRows := 0
-	for addedRows < m.SlowLogger.NbrRows {
+	handledRows := 0
+	for handledRows < m.SlowLogger.NbrRows {
 		row := m.SlowLogger.LogRows[slowIndex]
 		if row.Time == fastLogOldestTime || row.Time.After(fastLogOldestTime) {
 			// Continue with the fast log
 			break
 		}
-		pm.Times = append(pm.Times, row.Time)
-		for uid := range pm.Memory {
-			pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+		// Only add time if to / from restrictions are fullfilled
+		if (from.IsZero() || !row.Time.Before(from)) && (to.IsZero() || !row.Time.After(to)) {
+			pm.Times = append(pm.Times, row.Time)
+			for uid := range pm.Memory {
+				pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+			}
 		}
-		addedRows++
+		handledRows++
 		slowIndex++
 		if slowIndex == m.SlowLogger.MaxRows {
 			// Wrap of log
@@ -95,14 +99,17 @@ func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
 
 	// Continue extract from the fast log
 	fastIndex := m.FastLogger.OldestIndex()
-	addedRows = 0
-	for addedRows < m.FastLogger.NbrRows {
+	handledRows = 0
+	for handledRows < m.FastLogger.NbrRows {
 		row := m.FastLogger.LogRows[fastIndex]
-		pm.Times = append(pm.Times, row.Time)
-		for uid := range pm.Memory {
-			pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+		// Only add time if to / from restrictions are fullfilled
+		if (from.IsZero() || !row.Time.Before(from)) && (to.IsZero() || !row.Time.After(to)) {
+			pm.Times = append(pm.Times, row.Time)
+			for uid := range pm.Memory {
+				pm.Memory[uid] = append(pm.Memory[uid], row.GetMemUsed(uid))
+			}
 		}
-		addedRows++
+		handledRows++
 		fastIndex++
 		if fastIndex == m.FastLogger.MaxRows {
 			// Wrap of log
@@ -111,6 +118,12 @@ func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
 	}
 	m.Mutex.Unlock()
 	return pm
+}
+
+// GetProcessMeasurements "extracts" the measured values for the provided list
+// of processes (using UID as selector) .
+func (m *Measurement) GetProcessMeasurements(uids []int) *ProcessMeasurements {
+	return m.GetProcessMeasurementsBetween(uids, time.Time{}, time.Time{})
 }
 
 // measureLoop runs the measurement loop. Supposed to be runned as a goroutine.

@@ -47,6 +47,7 @@ func TestGetProcessMeasurements(t *testing.T) {
 	assertEqualsSlice(t, "Values 2", []uint32{12, 21, 11}, pm.Memory[uid2])
 
 	time.Sleep(50 * time.Millisecond) // To make time differ
+
 	pMock.Processes[pid1].MemoryUsage = 1024 * 10
 	pMock.Processes[pid2].MemoryUsage = 1024 * 43
 	m.measureAndLog(false)
@@ -93,6 +94,25 @@ func TestGetProcessMeasurements(t *testing.T) {
 	pm = m.GetProcessMeasurements(uids)
 	assertEqualsSlice(t, "Values 1", []uint32{44, 65, 28, 71, 98}, pm.Memory[uid1])
 	assertEqualsSlice(t, "Values 2", []uint32{11, 56, 87, 17, 89}, pm.Memory[uid2])
+
+	// Filter out using from / to
+	from := pm.Times[1]
+	to := pm.Times[3]
+	pm = m.GetProcessMeasurementsBetween(uids, from, to)
+	assertEqualsSlice(t, "Values 1", []uint32{65, 28, 71}, pm.Memory[uid1])
+	assertEqualsSlice(t, "Values 2", []uint32{56, 87, 17}, pm.Memory[uid2])
+	// Only from
+	pm = m.GetProcessMeasurementsBetween(uids, from, time.Time{})
+	assertEqualsSlice(t, "Values 1", []uint32{65, 28, 71, 98}, pm.Memory[uid1])
+	assertEqualsSlice(t, "Values 2", []uint32{56, 87, 17, 89}, pm.Memory[uid2])
+	// Only to
+	pm = m.GetProcessMeasurementsBetween(uids, time.Time{}, to)
+	assertEqualsSlice(t, "Values 1", []uint32{44, 65, 28, 71}, pm.Memory[uid1])
+	assertEqualsSlice(t, "Values 2", []uint32{11, 56, 87, 17}, pm.Memory[uid2])
+	// Invalid - swap from and to
+	pm = m.GetProcessMeasurementsBetween(uids, to, from)
+	assertEqualsSlice(t, "Values 1", []uint32{}, pm.Memory[uid1])
+	assertEqualsSlice(t, "Values 2", []uint32{}, pm.Memory[uid2])
 
 	// Get measurement for non existing process
 	m.GetProcessMeasurements([]int{12345})
