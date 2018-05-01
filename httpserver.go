@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // HTTPServer represents the HTTP server
@@ -74,6 +75,38 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getFromTo is a function that identifies if the URL includes any of following
+// query parameters:
+//  - from (restrict result from time in RFC3339 format)
+//  - to (restruct result to time in RFC3339 format)
+//
+// If the above is not given the zero (default) time is returned.
+//
+// Returns:
+// (from, to, error)
+func (s *HTTPServer) getFromTo(values url.Values) (time.Time, time.Time, error) {
+	from := time.Time{} // Zero
+	to := time.Time{}   // Zero
+	var err error
+
+	fromStr, hasElement := values["from"]
+	if hasElement {
+		from, err = time.Parse(time.RFC3339, fromStr[0])
+		if err != nil {
+			return from, to, fmt.Errorf("Invalid parameter from %s. Reason: %s", fromStr[0], err)
+		}
+	}
+
+	toStr, hasElement := values["to"]
+	if hasElement {
+		to, err = time.Parse(time.RFC3339, toStr[0])
+		if err != nil {
+			return from, to, fmt.Errorf("Invalid parameter to %s. Reason: %s", toStr[0], err)
+		}
+	}
+	return from, to, nil
+}
+
 // getUIDs is a function that identifies if the URL includes any of follwowing
 // query parameters:
 //  - uids (list of uids, example uids=12,42,1234)
@@ -96,10 +129,7 @@ func (s *HTTPServer) getUIDs(values url.Values) ([]int, error) {
 	}
 
 	// If not given, check the match parameter
-	uids, err = s.parseQueryMatch(values)
-	if err != nil {
-		return uids, err
-	}
+	uids = s.parseQueryMatch(values)
 	if uids != nil {
 		return uids, nil
 	}
@@ -137,10 +167,10 @@ func parseQueryUIDs(values url.Values) ([]int, error) {
 // parseQueryMatch parses the match query parameter and returns a slice of UIDs.
 // More than one match parameters might be added and will be interpreted as OR.
 // If the match parameter is not provided nil will be returned.
-func (s *HTTPServer) parseQueryMatch(values url.Values) ([]int, error) {
+func (s *HTTPServer) parseQueryMatch(values url.Values) []int {
 	match, hasElement := values["match"]
 	if !hasElement {
-		return nil, nil
+		return nil
 	}
 	s.measurement.Mutex.Lock()
 	defer s.measurement.Mutex.Unlock()
@@ -162,7 +192,7 @@ func (s *HTTPServer) parseQueryMatch(values url.Values) ([]int, error) {
 			}
 		}
 	}
-	return uids, nil
+	return uids
 }
 
 func (s *HTTPServer) serveHTTPMeasurements(w http.ResponseWriter, values url.Values) {
@@ -171,7 +201,12 @@ func (s *HTTPServer) serveHTTPMeasurements(w http.ResponseWriter, values url.Val
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	measurements := s.measurement.GetProcessMeasurements(uids) // Thread safe
+	from, to, err := s.getFromTo(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	measurements := s.measurement.GetProcessMeasurementsBetween(uids, from, to) // Thread safe
 	js, err := json.Marshal(measurements)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -187,6 +222,11 @@ func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	from, to, err := s.getFromTo(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	templateFile := filepath.Join(s.basePath, "templates", "plot.gohtml")
 	t, err := template.New("").Funcs(*s.fm).ParseFiles(templateFile)
 	if err != nil {
@@ -198,7 +238,7 @@ func (s *HTTPServer) serveHTTPPlot(w http.ResponseWriter, values url.Values) {
 		Processes    map[int]*Process
 	}
 	measAndProcesses := MeasAndProcesses{Processes: make(map[int]*Process)}
-	measAndProcesses.Measurements = s.measurement.GetProcessMeasurements(uids) // Thread safe
+	measAndProcesses.Measurements = s.measurement.GetProcessMeasurementsBetween(uids, from, to) // Thread safe
 	s.measurement.Mutex.Lock()
 	for uid := range measAndProcesses.Measurements.Memory {
 		measAndProcesses.Processes[uid] = s.measurement.PM.All[uid]
