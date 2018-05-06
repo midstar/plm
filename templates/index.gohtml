@@ -163,8 +163,10 @@
         <table>
           <col width="400">
           <col>
-          <col width="400">
-          <col width="50">
+          <col width="200">
+          <col>
+          <col width="200">
+          <col width="10">
           <col width="100">
           <col width="20">
           <tr>
@@ -182,10 +184,29 @@
                   <th>Min</th>
                 </tr>
                 <tr>
-                  <td>{{kb_to_mb .Phys.TotalPhys}} MB</td>
-                  <td>{{kb_to_mb .Phys.LastPhys}} MB</td>
-                  <td>{{kb_to_mb .Phys.MaxPhysEver}} MB</td>
-                  <td>{{kb_to_mb .Phys.MinPhysEver}} MB</td>
+                  <td>{{kb_to_mb .PM.Phys.TotalPhys}} MB</td>
+                  <td>{{kb_to_mb .PM.Phys.LastPhys}} MB</td>
+                  <td>{{kb_to_mb .PM.Phys.MaxPhysEver}} MB</td>
+                  <td>{{kb_to_mb .PM.Phys.MinPhysEver}} MB</td>
+                </tr>
+              </table>
+            </td>
+            <td>
+            </td>
+            <td>
+              <table style="text-align:center;">
+                <tr>
+                  <th colspan="2">
+                  LOG UTILIZATION
+                  </th>
+                </tr>
+                <tr>
+                  <th>Fast</th>
+                  <th>Slow</th>
+                </tr>
+                <tr>
+                  <td>{{log_utilization .FastLogger}} %</td>
+                  <td>{{log_utilization .SlowLogger}} %</td>
                 </tr>
               </table>
             </td>
@@ -195,7 +216,7 @@
             <div style="font-weight:bold;">
             SEARCH
             </div>
-            <input type="text" id="searchinput" name="search" size="50" oninput="filter()">
+            <input type="text" id="searchinput" name="search" size="20" oninput="filter()">
             </td>
             <td></td>
             <td><button type="button" onclick="plot()">PLOT SELECTED</button></td>
@@ -231,7 +252,7 @@
             <th>Max</th>
             <th>Min</th>
           </tr>
-          {{range .All}}
+          {{range .PM.All}}
           {{if .IsAlive}}
           <tr>
             <td><input type="checkbox"></td>
@@ -275,7 +296,7 @@
             <th>Max</th>
             <th>Min</th>
           </tr>
-          {{range .All}}
+          {{range .PM.All}}
           {{if not .IsAlive}}
           <tr>
             <td><input type="checkbox"></td>

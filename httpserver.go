@@ -42,6 +42,11 @@ func CreateHTTPServer(basePath string, port int, measurement *Measurement) *HTTP
 				mbValues[i] = float64(kb_values[i]/512) / 2
 			}
 			return mbValues
+		},
+
+		// Log utulization in %
+		"log_utilization": func(log Logger) int {
+			return int(float64(log.NbrRows*100) / float64(log.MaxRows))
 		}}
 	portStr := fmt.Sprintf(":%d", port)
 	srv := &http.Server{Addr: portStr}
@@ -260,7 +265,7 @@ func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
 		return
 	}
 	s.measurement.Mutex.Lock()
-	err = t.ExecuteTemplate(w, "index.gohtml", s.measurement.PM)
+	err = t.ExecuteTemplate(w, "index.gohtml", s.measurement)
 	s.measurement.Mutex.Unlock()
 	if err != nil {
 		http.Error(w, "Execute template: "+err.Error(), http.StatusInternalServerError)
