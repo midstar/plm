@@ -74,6 +74,8 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveHTTPPlot(w, r.URL.Query())
 	case "GET measurements":
 		s.serveHTTPMeasurements(w, r.URL.Query())
+	case "GET minmaxmem":
+		s.serveHTTPGetMinMaxMem(w, r.URL.Query())
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "This is not a valid path: %s or method %s!", r.URL.Path, r.Method)
@@ -198,6 +200,56 @@ func (s *HTTPServer) parseQueryMatch(values url.Values) []int {
 		}
 	}
 	return uids
+}
+
+// serveHTTPGetMinMaxMem returns the highest and lowest memory consumption
+// during a specific time
+func (s *HTTPServer) serveHTTPGetMinMaxMem(w http.ResponseWriter, values url.Values) {
+	type ProcessMinMaxMem struct {
+		Process
+		MaxMemoryInPeriod uint32 // Maximum memory during period (KB)
+		MinMemoryInPeriod uint32 // Minimum memory during period(KB)
+	}
+	uids, err := s.getUIDs(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	from, to, err := s.getFromTo(values)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	measurements := s.measurement.GetProcessMeasurementsBetween(uids, from, to) // Thread safe
+	s.measurement.Mutex.Lock()
+	defer s.measurement.Mutex.Unlock()
+	result := make([]ProcessMinMaxMem, 0, len(measurements.Memory))
+	for uid, values := range measurements.Memory {
+		process, hasElement := s.measurement.PM.All[uid]
+		if hasElement {
+			p := ProcessMinMaxMem{
+				Process:           *process,
+				MaxMemoryInPeriod: 0,
+				MinMemoryInPeriod: 4294967295} // = 2 ^ 32 - 1
+			for _, value := range values {
+				if value > p.MaxMemoryInPeriod {
+					p.MaxMemoryInPeriod = value
+				}
+				if value < p.MinMemoryInPeriod {
+					p.MinMemoryInPeriod = value
+				}
+			}
+			result = append(result, p)
+		}
+	}
+	js, err := json.Marshal(result)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 }
 
 func (s *HTTPServer) serveHTTPMeasurements(w http.ResponseWriter, values url.Values) {

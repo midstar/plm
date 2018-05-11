@@ -60,6 +60,7 @@ func TestHttpServer(t *testing.T) {
 	testGetPlotBetween(t, baseURL, timeStamp1, timeStamp2)
 	testGetMeasurements(t, baseURL)
 	testGetMeasurementsBetween(t, baseURL, timeStamp1, timeStamp2)
+	testGetMinMaxMem(t, baseURL)
 	testInvalidPath(t, baseURL)
 
 	// Stop HTTP server
@@ -377,6 +378,44 @@ func testGetMeasurementsBetween(t *testing.T, baseURL string, from time.Time, to
 	resp, err = http.Get(fmt.Sprintf("%s/measurements?to=invalid", baseURL))
 	if err != nil {
 		t.Fatal("Unable to get measurements. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+}
+
+// Called from TestHttpServer
+func testGetMinMaxMem(t *testing.T, baseURL string) {
+	resp, err := http.Get(fmt.Sprintf("%s/minmaxmem", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get minmaxmem. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Unable to get processes. Reason: ", err)
+	}
+	type ProcessMinMaxMem struct {
+		Process
+		MaxMemoryInPeriod uint32 // Maximum memory during period (KB)
+		MinMemoryInPeriod uint32 // Minimum memory during period(KB)
+	}
+	var processesMinMaxSlice []ProcessMinMaxMem
+	err = json.Unmarshal(body, &processesMinMaxSlice)
+	if err != nil {
+		t.Fatal("Unable decode get minmaxmem. Reason: ", err)
+	}
+	if len(processesMinMaxSlice) != 10 {
+		t.Fatal("Expected min max for all process but got only: ", len(processesMinMaxSlice))
+	}
+
+	// Test invalid UID
+	resp, err = http.Get(fmt.Sprintf("%s/minmaxmem?uids=invalid", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get minmaxmem. Reason: ", err)
 	}
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatal("Unexpected status code: ", resp.StatusCode)
