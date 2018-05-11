@@ -15,6 +15,9 @@ var Matcher string
 // UIDs uid -u flag
 var UIDs string
 
+// FailLimit memory fail limit -f flag
+var FailLimit int64
+
 func printUsage() {
 	fmt.Printf("usage: plmc [options] <command> [<args>]\n\n")
 	fmt.Printf(" General options:\n")
@@ -25,6 +28,8 @@ func printUsage() {
 	fmt.Printf("  help   Help for a command\n")
 	fmt.Printf("  plot   Download plot for one or more processes\n")
 	fmt.Printf("  info   List info about one or more processes\n")
+	fmt.Printf("  maxmem Display max memory used by process\n")
+	fmt.Printf("  minmem Display min memory used by process\n")
 }
 
 func printUsageCommand(command string) {
@@ -46,6 +51,28 @@ func printUsageCommand(command string) {
 		fmt.Printf("Usage: plmc [options] info\n\n")
 		fmt.Printf(" Options:\n")
 		printProcessFilterFlags()
+	case "maxmem":
+		fmt.Printf("Display max memory used by process.\n")
+		fmt.Printf("By default all processes are listed. Can be resttricted\n")
+		fmt.Printf("with options described below\n\n")
+		fmt.Printf("Usage: plmc [options] maxmem\n\n")
+		fmt.Printf(" Options:\n")
+		printProcessFilterFlags()
+		fmt.Printf("  -f <int>      Fail (return code 1) if memory is above the\n")
+		fmt.Printf("                specified value in KB. If more than one\n")
+		fmt.Printf("                process match the command will fail if any\n")
+		fmt.Printf("                of the processes max memory is over the limit\n")
+	case "minmem":
+		fmt.Printf("Display min memory used by process.\n")
+		fmt.Printf("By default all processes are listed. Can be resttricted\n")
+		fmt.Printf("with options described below\n\n")
+		fmt.Printf("Usage: plmc [options] minmem\n\n")
+		fmt.Printf(" Options:\n")
+		printProcessFilterFlags()
+		fmt.Printf("  -f <int>      Fail (return code 1) if memory is below the\n")
+		fmt.Printf("                specified value in KB. If more than one\n")
+		fmt.Printf("                process match the command will fail if any\n")
+		fmt.Printf("                of the processes min memory is below the limit\n")
 	default:
 		fmt.Fprintf(os.Stderr, "No such command %s\n\n", command)
 		printUsage()
@@ -59,7 +86,6 @@ func printProcessFilterFlags() {
 	fmt.Printf("  -u <int>      List process with matching UID. More than\n")
 	fmt.Printf("                one UID can be entered in a comma separated\n")
 	fmt.Printf("                list. For example -u 3,6,7\n")
-
 }
 
 func invalidUsage(why string) {
@@ -81,6 +107,7 @@ func main() {
 	flag.StringVar(&PLMUrl, "a", "http://localhost:12124", "PLM server address")
 	flag.StringVar(&Matcher, "m", "", "Matcher(s)")
 	flag.StringVar(&UIDs, "u", "", "UID(s)")
+	flag.Int64Var(&FailLimit, "f", -1, "Fail limit")
 	flag.Usage = printUsage
 	flag.Parse()
 
@@ -113,6 +140,16 @@ func main() {
 			invalidUsageCommand(fmt.Sprintf("info takes no argument but %d given!", flag.NArg()-1), command)
 		}
 		err = CmdInfo()
+	case "maxmem":
+		if flag.NArg() != 1 {
+			invalidUsageCommand(fmt.Sprintf("maxmem takes no argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdMax()
+	case "minmem":
+		if flag.NArg() != 1 {
+			invalidUsageCommand(fmt.Sprintf("minmem takes no argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdMin()
 	default:
 		invalidUsage(fmt.Sprintf("Invalid command '%s'!", command))
 	}
