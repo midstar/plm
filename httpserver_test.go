@@ -35,19 +35,29 @@ func TestHttpServer(t *testing.T) {
 	pMock := proci.GenerateMock(10)
 	m := CreateMeasurement(3, 6, 3, 6, pMock)
 
-	m.measureAndLog(false)
-	time.Sleep(2 * time.Second) // To make time differ
-	timeStamp1 := time.Now()
-	m.measureAndLog(true)
-	time.Sleep(2 * time.Second) // To make time differ
-	timeStamp2 := time.Now()
-	time.Sleep(2 * time.Second) // To make time differ
-	m.measureAndLog(false)
-
 	// Create and start the HTTP server
 	httpServer := CreateHTTPServer("", port, m)
 	t.Log("Starting HTTP server")
 	httpServer.Start()
+
+	// Add some measurements
+	var err error
+	m.measureAndLog(false)
+	time.Sleep(2 * time.Second) // To make time differ
+	_, err = http.Post(fmt.Sprintf("%s/tag/t1", baseURL), "", nil)
+	if err != nil {
+		t.Fatal("Unable to post tag. Reason: ", err)
+	}
+	timeStamp1 := time.Now()
+	m.measureAndLog(true)
+	time.Sleep(2 * time.Second) // To make time differ
+	timeStamp2 := time.Now()
+	_, err = http.Post(fmt.Sprintf("%s/tag/t2", baseURL), "", nil)
+	if err != nil {
+		t.Fatal("Unable to post tag. Reason: ", err)
+	}
+	time.Sleep(2 * time.Second) // To make time differ
+	m.measureAndLog(false)
 
 	// Tests
 	testGetIndex(t, baseURL)
@@ -375,6 +385,35 @@ func testGetMeasurementsBetween(t *testing.T, baseURL string, from time.Time, to
 		t.Fatal("Expected 1 time stamps but got: ", len(measurements.Times))
 	}
 
+	// Test using tags
+	path = fmt.Sprintf("%s/measurements?fromTag=t1&toTag=t2", baseURL)
+	resp, err = http.Get(path)
+	if err != nil {
+		t.Fatal("Unable to get measurements using tags. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Unable to get processes. Reason: ", err)
+	}
+	var measurementsTags ProcessMeasurements
+	err = json.Unmarshal(body, &measurementsTags)
+	if err != nil {
+		t.Fatal("Unable decode get measurements with tags. Reason: ", err)
+	}
+	if len(measurementsTags.Memory) != 10 {
+		t.Fatal("Expected measurements for all process but got only: ", len(measurements.Memory))
+	}
+	if len(measurementsTags.Memory[1]) != 1 {
+		t.Fatal("Expected 1 measurements but got: ", len(measurements.Memory[1]))
+	}
+	if len(measurementsTags.Times) != 1 {
+		t.Fatal("Expected 1 time stamps but got: ", len(measurements.Times))
+	}
+
 	// Test invalid to
 	resp, err = http.Get(fmt.Sprintf("%s/measurements?to=invalid", baseURL))
 	if err != nil {
@@ -383,6 +422,25 @@ func testGetMeasurementsBetween(t *testing.T, baseURL string, from time.Time, to
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatal("Unexpected status code: ", resp.StatusCode)
 	}
+
+	// Test invalid from tag
+	resp, err = http.Get(fmt.Sprintf("%s/measurements?fromTag=invalid", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get measurements. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+
+	// Test invalid to tag
+	resp, err = http.Get(fmt.Sprintf("%s/measurements?toTag=invalid", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get measurements. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+
 }
 
 // Called from TestHttpServer
@@ -476,8 +534,8 @@ func testTags(t *testing.T, baseURL string) {
 	if err != nil {
 		t.Fatal("Unable decode tags response. Reason: ", err)
 	}
-	if len(tags) != 1 {
-		t.Fatal("Expected only one tag but got:", len(tags))
+	if len(tags) != 3 {
+		t.Fatal("Expected three tags but got:", len(tags))
 	}
 	if _, hasTag := tags["tag1"]; !hasTag {
 		t.Fatal("Expected tag1 to be in the tag list, but it was not")

@@ -108,6 +108,8 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // query parameters:
 //  - from (restrict result from time in RFC3339 format)
 //  - to (restruct result to time in RFC3339 format)
+//  - fromTag (as from but use a tag)
+//  - toTag (as to but use tag)
 //
 // If the above is not given the zero (default) time is returned.
 //
@@ -124,6 +126,18 @@ func (s *HTTPServer) getFromTo(values url.Values) (time.Time, time.Time, error) 
 		if err != nil {
 			return from, to, fmt.Errorf("Invalid parameter from %s. Reason: %s", fromStr[0], err)
 		}
+	} else {
+		var fromTagStr []string
+		fromTagStr, hasElement = values["fromTag"]
+		if hasElement {
+			s.tagsMutex.Lock()
+			var hasTag bool
+			from, hasTag = s.tags[fromTagStr[0]]
+			s.tagsMutex.Unlock()
+			if !hasTag {
+				return from, to, fmt.Errorf("Invalid tag: %s", fromTagStr[0])
+			}
+		}
 	}
 
 	toStr, hasElement := values["to"]
@@ -132,7 +146,20 @@ func (s *HTTPServer) getFromTo(values url.Values) (time.Time, time.Time, error) 
 		if err != nil {
 			return from, to, fmt.Errorf("Invalid parameter to %s. Reason: %s", toStr[0], err)
 		}
+	} else {
+		var toTagStr []string
+		toTagStr, hasElement = values["toTag"]
+		if hasElement {
+			s.tagsMutex.Lock()
+			var hasTag bool
+			to, hasTag = s.tags[toTagStr[0]]
+			s.tagsMutex.Unlock()
+			if !hasTag {
+				return from, to, fmt.Errorf("Invalid tag: %s", toTagStr[0])
+			}
+		}
 	}
+
 	return from, to, nil
 }
 
