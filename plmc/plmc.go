@@ -30,6 +30,9 @@ func printUsage() {
 	fmt.Printf("  info   List info about one or more processes\n")
 	fmt.Printf("  maxmem Display max memory used by process\n")
 	fmt.Printf("  minmem Display min memory used by process\n")
+	fmt.Printf("  tagset Create a tag\n")
+	fmt.Printf("  tagget Get a tag\n")
+	fmt.Printf("  tags   List all tags\n")
 }
 
 func printUsageCommand(command string) {
@@ -73,6 +76,15 @@ func printUsageCommand(command string) {
 		fmt.Printf("                specified value in KB. If more than one\n")
 		fmt.Printf("                process match the command will fail if any\n")
 		fmt.Printf("                of the processes min memory is below the limit\n")
+	case "tagset":
+		fmt.Printf("Create a tag (i.e. a named timestamp).\n\n")
+		fmt.Printf("Usage: plmc tagset <tagname>\n")
+	case "tagget":
+		fmt.Printf("Get the timestampe of a tag.\n\n")
+		fmt.Printf("Usage: plmc tagget <tagname>\n")
+	case "tags":
+		fmt.Printf("List all tags.\n\n")
+		fmt.Printf("Usage: plmc tags\n\n")
 	default:
 		fmt.Fprintf(os.Stderr, "No such command %s\n\n", command)
 		printUsage()
@@ -150,6 +162,21 @@ func main() {
 			invalidUsageCommand(fmt.Sprintf("minmem takes no argument but %d given!", flag.NArg()-1), command)
 		}
 		err = CmdMin()
+	case "tagget":
+		if flag.NArg() != 2 {
+			invalidUsageCommand(fmt.Sprintf("tagget takes 1 argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdTagGet(flag.Arg(1))
+	case "tagset":
+		if flag.NArg() != 2 {
+			invalidUsageCommand(fmt.Sprintf("tagset takes 1 argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdTagSet(flag.Arg(1))
+	case "tags":
+		if flag.NArg() != 1 {
+			invalidUsageCommand(fmt.Sprintf("tags takes no argument but %d given!", flag.NArg()-1), command)
+		}
+		err = CmdTags()
 	default:
 		invalidUsage(fmt.Sprintf("Invalid command '%s'!", command))
 	}

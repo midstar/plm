@@ -29,6 +29,9 @@ func CmdPlot(filename string) error {
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
+	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -69,6 +72,9 @@ func CmdInfo() error {
 	resp, err := http.Get(fmt.Sprintf("%s/processes%s", PLMUrl, processFilters()))
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -147,6 +153,9 @@ func getMinMax() ([]ProcessMinMaxMem, error) {
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
+	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -164,4 +173,67 @@ func getMinMax() ([]ProcessMinMaxMem, error) {
 		fmt.Printf("WARNING! More than one process found that match query (%d)\n", len(processes))
 	}
 	return processes, nil
+}
+
+// CmdTagSet creates a tag
+func CmdTagSet(tagName string) error {
+	resp, err := http.Post(fmt.Sprintf("%s/tag/%s", PLMUrl, tagName), "", nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+// CmdTagGet gets a tag
+func CmdTagGet(tagName string) error {
+	resp, err := http.Get(fmt.Sprintf("%s/tag/%s", PLMUrl, tagName))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("Tag %s has never been created", tagName)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	var t time.Time
+	err = json.Unmarshal(body, &t)
+	if err != nil {
+		return err
+	}
+	fmt.Println(t)
+	return nil
+}
+
+// CmdTags list all tags
+func CmdTags() error {
+	resp, err := http.Get(fmt.Sprintf("%s/tags", PLMUrl))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	tags := make(map[string]time.Time)
+	err = json.Unmarshal(body, &tags)
+	if err != nil {
+		return err
+	}
+	for tag, t := range tags {
+		fmt.Printf("%v: %v\n", tag, t)
+	}
+	return nil
 }
