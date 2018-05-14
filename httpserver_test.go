@@ -62,6 +62,7 @@ func TestHttpServer(t *testing.T) {
 	testGetMeasurementsBetween(t, baseURL, timeStamp1, timeStamp2)
 	testGetMinMaxMem(t, baseURL)
 	testInvalidPath(t, baseURL)
+	testTags(t, baseURL)
 
 	// Stop HTTP server
 	httpServer.Stop()
@@ -418,6 +419,94 @@ func testGetMinMaxMem(t *testing.T, baseURL string) {
 		t.Fatal("Unable to get minmaxmem. Reason: ", err)
 	}
 	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+}
+
+// Called from TestHttpServer
+func testTags(t *testing.T, baseURL string) {
+	// POST tag
+	tBefore := time.Now()
+	resp, err := http.Post(fmt.Sprintf("%s/tag/tag1", baseURL), "", nil)
+	tAfter := time.Now()
+	if err != nil {
+		t.Fatal("Unable to post tag. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+
+	// GET tag
+	resp, err = http.Get(fmt.Sprintf("%s/tag/tag1", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get tag. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Unable to get date. Reason: ", err)
+	}
+	var tag1Time time.Time
+	err = json.Unmarshal(body, &tag1Time)
+	if err != nil {
+		t.Fatal("Unable decode tag1 response. Reason: ", err)
+	}
+	if tag1Time.Before(tBefore) || tag1Time.After(tAfter) {
+		t.Fatal("tag1 time is incorrect")
+	}
+
+	// GET tags
+	resp, err = http.Get(fmt.Sprintf("%s/tags", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get tags. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Unable to get tags. Reason: ", err)
+	}
+	tags := make(map[string]time.Time)
+	err = json.Unmarshal(body, &tags)
+	if err != nil {
+		t.Fatal("Unable decode tags response. Reason: ", err)
+	}
+	if len(tags) != 1 {
+		t.Fatal("Expected only one tag but got:", len(tags))
+	}
+	if _, hasTag := tags["tag1"]; !hasTag {
+		t.Fatal("Expected tag1 to be in the tag list, but it was not")
+	}
+
+	// Invalid POST tag:
+	resp, err = http.Post(fmt.Sprintf("%s/tag", baseURL), "", nil)
+	if err != nil {
+		t.Fatal("Unable to post tag with empty value. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+
+	// Invalid GET tag:
+	resp, err = http.Get(fmt.Sprintf("%s/tag", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get tag with empty value. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+
+	// GET tag that does not exist:
+	resp, err = http.Get(fmt.Sprintf("%s/tag/invalidtag", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get tag with invalid value. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusNotFound {
 		t.Fatal("Unexpected status code: ", resp.StatusCode)
 	}
 }
