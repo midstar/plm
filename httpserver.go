@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,8 @@ type HTTPServer struct {
 	server      *http.Server
 	fm          *template.FuncMap
 	basePath    string
+	tags        map[string]time.Time // Use tagsMutext for read/write
+	tagsMutex   sync.Mutex
 }
 
 // CreateHTTPServer creates the HTTP server. Start it with Start.
@@ -53,7 +56,10 @@ func CreateHTTPServer(basePath string, port int, measurement *Measurement) *HTTP
 	server := &HTTPServer{
 		basePath:    basePath,
 		measurement: measurement,
-		server:      srv, fm: funcMap}
+		server:      srv,
+		fm:          funcMap,
+		tags:        make(map[string]time.Time),
+		tagsMutex:   sync.Mutex{}}
 
 	http.Handle("/", server)
 	return server
@@ -76,6 +82,22 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveHTTPMeasurements(w, r.URL.Query())
 	case "GET minmaxmem":
 		s.serveHTTPGetMinMaxMem(w, r.URL.Query())
+	case "POST tag":
+		if len(segments) < 3 {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Now tag name provided")
+		} else {
+			s.serveHTTPPostTag(w, segments[2])
+		}
+	case "GET tag":
+		if len(segments) < 3 {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Now tag name provided")
+		} else {
+			s.serveHTTPGetTag(w, segments[2])
+		}
+	case "GET tags":
+		s.serveHTTPGetTags(w)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "This is not a valid path: %s or method %s!", r.URL.Path, r.Method)
@@ -357,6 +379,42 @@ func (s *HTTPServer) serveHTTPGetRAM(w http.ResponseWriter) {
 	s.measurement.Mutex.Lock()
 	js, err := json.Marshal(s.measurement.PM.Phys)
 	s.measurement.Mutex.Unlock()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func (s *HTTPServer) serveHTTPPostTag(w http.ResponseWriter, tagName string) {
+	s.tagsMutex.Lock()
+	defer s.tagsMutex.Unlock()
+	s.tags[tagName] = time.Now()
+}
+
+func (s *HTTPServer) serveHTTPGetTag(w http.ResponseWriter, tagName string) {
+	s.tagsMutex.Lock()
+	defer s.tagsMutex.Unlock()
+	t, hasTag := s.tags[tagName]
+	if !hasTag {
+		errText := fmt.Sprintf("Tag %s not found", tagName)
+		http.Error(w, errText, http.StatusNotFound)
+		return
+	}
+	js, err := json.Marshal(t)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func (s *HTTPServer) serveHTTPGetTags(w http.ResponseWriter) {
+	s.tagsMutex.Lock()
+	defer s.tagsMutex.Unlock()
+	js, err := json.Marshal(s.tags)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
