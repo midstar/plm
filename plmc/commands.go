@@ -9,13 +9,19 @@ import (
 	"time"
 )
 
-func processFilters() string {
+func getQueryParams() string {
 	queryParams := url.Values{}
 	if Matcher != "" {
 		queryParams.Add("match", Matcher)
 	}
 	if UIDs != "" {
 		queryParams.Add("uids", UIDs)
+	}
+	if FromTag != "" {
+		queryParams.Add("fromTag", FromTag)
+	}
+	if ToTag != "" {
+		queryParams.Add("toTag", ToTag)
 	}
 	if len(queryParams) == 0 {
 		return ""
@@ -25,7 +31,7 @@ func processFilters() string {
 
 // CmdPlot get plot for one or more processes
 func CmdPlot(filename string) error {
-	resp, err := http.Get(fmt.Sprintf("%s/plot%s", PLMUrl, processFilters()))
+	resp, err := http.Get(fmt.Sprintf("%s/plot%s", PLMUrl, getQueryParams()))
 	if err != nil {
 		return err
 	}
@@ -69,7 +75,7 @@ type ProcessMinMaxMem struct {
 
 // CmdInfo list info about for one or more processes
 func CmdInfo() error {
-	resp, err := http.Get(fmt.Sprintf("%s/processes%s", PLMUrl, processFilters()))
+	resp, err := http.Get(fmt.Sprintf("%s/processes%s", PLMUrl, getQueryParams()))
 	if err != nil {
 		return err
 	}
@@ -149,17 +155,17 @@ func CmdMin() error {
 }
 
 func getMinMax() ([]ProcessMinMaxMem, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/minmaxmem%s", PLMUrl, processFilters()))
+	resp, err := http.Get(fmt.Sprintf("%s/minmaxmem%s", PLMUrl, getQueryParams()))
 	if err != nil {
 		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Unexpected status code from plm server: %d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Unexpected status code from plm server: %d\n%s", resp.StatusCode, body)
 	}
 	var processes []ProcessMinMaxMem
 	err = json.Unmarshal(body, &processes)
