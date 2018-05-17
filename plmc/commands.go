@@ -243,3 +243,41 @@ func CmdTags() error {
 	}
 	return nil
 }
+
+// CmdVersion list plmc (client) and if possible plm (server) version
+func CmdVersion() error {
+	// List plmc version
+	fmt.Printf("Client Version:    %s\n", applicationVersion)
+	fmt.Printf("Client Build Time: %s\n", applicationBuildTime)
+	fmt.Printf("Client GIT Hash:   %s\n", applicationGitHash)
+
+	fmt.Printf("\n")
+
+	// Try to list plm version
+	resp, err := http.Get(fmt.Sprintf("%s/version", PLMUrl))
+	if err != nil {
+		return fmt.Errorf("Cannot detect plm server version: %s. ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unexpected status code from plm server: %d. ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	type version struct {
+		Version   string
+		BuildTime string
+		GitHash   string
+	}
+	ver := version{}
+	err = json.Unmarshal(body, &ver)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Server Version:    %s\n", ver.Version)
+	fmt.Printf("Server Build Time: %s\n", ver.BuildTime)
+	fmt.Printf("Server GIT Hash:   %s\n", ver.GitHash)
+	return nil
+}

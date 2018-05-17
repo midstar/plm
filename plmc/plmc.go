@@ -140,9 +140,11 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("Client Version:    %s\n", applicationVersion)
-		fmt.Printf("Client Build Time: %s\n", applicationBuildTime)
-		fmt.Printf("Client GIT Hash:   %s\n", applicationGitHash)
+		err := CmdVersion()
+		if err != nil {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 

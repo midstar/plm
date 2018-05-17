@@ -15,6 +15,12 @@ import (
 	"time"
 )
 
+type version struct {
+	Version   string
+	BuildTime string
+	GitHash   string
+}
+
 // HTTPServer represents the HTTP server
 type HTTPServer struct {
 	measurement *Measurement
@@ -23,6 +29,7 @@ type HTTPServer struct {
 	basePath    string
 	tags        map[string]time.Time // Use tagsMutext for read/write
 	tagsMutex   sync.Mutex
+	ver         version
 }
 
 // CreateHTTPServer creates the HTTP server. Start it with Start.
@@ -59,7 +66,11 @@ func CreateHTTPServer(basePath string, port int, measurement *Measurement) *HTTP
 		server:      srv,
 		fm:          funcMap,
 		tags:        make(map[string]time.Time),
-		tagsMutex:   sync.Mutex{}}
+		tagsMutex:   sync.Mutex{},
+		ver: version{
+			Version:   applicationVersion,
+			BuildTime: applicationBuildTime,
+			GitHash:   applicationGitHash}}
 
 	http.Handle("/", server)
 	return server
@@ -98,6 +109,8 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case "GET tags":
 		s.serveHTTPGetTags(w)
+	case "GET version":
+		s.serveHTTPGetVersion(w)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "This is not a valid path: %s or method %s!", r.URL.Path, r.Method)
@@ -365,8 +378,15 @@ func (s *HTTPServer) serveHTTPIndex(w http.ResponseWriter) {
 		http.Error(w, "Create template: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	type data struct {
+		*Measurement
+		*version
+	}
+	d := data{
+		Measurement: s.measurement,
+		version:     &s.ver}
 	s.measurement.Mutex.Lock()
-	err = t.ExecuteTemplate(w, "index.gohtml", s.measurement)
+	err = t.ExecuteTemplate(w, "index.gohtml", d)
 	s.measurement.Mutex.Unlock()
 	if err != nil {
 		http.Error(w, "Execute template: "+err.Error(), http.StatusInternalServerError)
@@ -442,6 +462,16 @@ func (s *HTTPServer) serveHTTPGetTags(w http.ResponseWriter) {
 	s.tagsMutex.Lock()
 	defer s.tagsMutex.Unlock()
 	js, err := json.Marshal(s.tags)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func (s *HTTPServer) serveHTTPGetVersion(w http.ResponseWriter) {
+	js, err := json.Marshal(s.ver)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

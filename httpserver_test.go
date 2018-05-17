@@ -73,6 +73,7 @@ func TestHttpServer(t *testing.T) {
 	testGetMinMaxMem(t, baseURL)
 	testInvalidPath(t, baseURL)
 	testTags(t, baseURL)
+	testGetVersion(t, baseURL)
 
 	// Stop HTTP server
 	httpServer.Stop()
@@ -566,5 +567,35 @@ func testTags(t *testing.T, baseURL string) {
 	}
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+}
+
+// Called from TestHttpServer
+func testGetVersion(t *testing.T, baseURL string) {
+	resp, err := http.Get(fmt.Sprintf("%s/version", baseURL))
+	if err != nil {
+		t.Fatal("Unable to get version. Reason: ", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatal("Unexpected status code: ", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Unable to get version body. Reason: ", err)
+	}
+	ver := version{}
+	err = json.Unmarshal(body, &ver)
+	if err != nil {
+		t.Fatal("Unable to get version json. Reason: ", err)
+	}
+	if ver.Version != "<NOT SET>" {
+		t.Fatal("Unexpected version: ", ver.Version)
+	}
+	if ver.BuildTime != "<NOT SET>" {
+		t.Fatal("Unexpected BuildTime: ", ver.BuildTime)
+	}
+	if ver.GitHash != "<NOT SET>" {
+		t.Fatal("Unexpected GitHash: ", ver.GitHash)
 	}
 }
