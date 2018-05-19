@@ -24,6 +24,6 @@ install:
 build_script:
   - go test -v -cover github.com\midstar\plm -coverprofile=coverage.out
   - '%GOPATH%/bin/goveralls -coverprofile=coverage.out -service=appveyor-ci -repotoken=%COVERALLS_TOKEN%'
-  - '%GOPATH%\github.com\midstar\plm\scripts\install_plm.bat %APPVEYOR_BUILD_VERSION%'
-  - '%GOPATH%\github.com\midstar\plm\scripts\install_plmc.bat %APPVEYOR_BUILD_VERSION%'
-  - 'makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %GOPATH%\github.com\midstar\plm\scripts\plm_windows_installer.nsi'
+  - '%GOPATH%\src\github.com\midstar\plm\scripts\install_plm.bat %APPVEYOR_BUILD_VERSION%'
+  - '%GOPATH%\src\github.com\midstar\plm\scripts\install_plmc.bat %APPVEYOR_BUILD_VERSION%'
+  - 'makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %GOPATH%\src\github.com\midstar\plm\scripts\plm_windows_installer.nsi'
