@@ -22,8 +22,8 @@ install:
   - go get github.com\kardianos\service
  
 build_script:
-  - go build github.com\midstar\plm
   - go test -v -cover github.com\midstar\plm -coverprofile=coverage.out
-  - dir
-  - echo %COVERALLS_TOKEN%
   - '%GOPATH%/bin/goveralls -coverprofile=coverage.out -service=appveyor-ci -repotoken=%COVERALLS_TOKEN%'
+  - '%GOPATH%\github.com\midstar\plm\scripts\install_plm.bat %APPVEYOR_BUILD_VERSION%'
+  - '%GOPATH%\github.com\midstar\plm\scripts\install_plmc.bat %APPVEYOR_BUILD_VERSION%'
+  - 'makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %GOPATH%\github.com\midstar\plm\scripts\plm_windows_installer.nsi'
