@@ -54,12 +54,12 @@ RequestExecutionLevel admin
 ;Interface Settings
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "images\logo.ico"
+!define MUI_ICON "${APPLICATION_SOURCE}\images\logo.ico"
 
 ;--------------------------------
 ;Pages
 
-!insertmacro MUI_PAGE_LICENSE "LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "${APPLICATION_SOURCE}\LICENSE.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -150,10 +150,12 @@ Section "${APPLICATION_NAME}" SectionMain
   ; Write the version into the registry
   WriteRegStr HKLM SOFTWARE\${APPLICATION_FOLDER} "Version" "${VERSION}"
   
+
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "DisplayName" "${APPLICATION_NAME} ${VERSION}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "Publisher" "Joel Midstjarna"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "DisplayIcon" "$\"$INSTDIR\logo.ico$\""
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "NoRepair" 1
   WriteUninstaller "uninstall.exe"

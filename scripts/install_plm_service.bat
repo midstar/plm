@@ -6,7 +6,7 @@ if not exist %GOPATH%\bin\plm.exe (
     exit /b 1
 )
 
-sc create plm binpath= "%GOPATH%\bin\plm.exe %GOPATH%\src\github.com\midstar\plm" start= auto DisplayName= "Process Load Monitor"
+sc create plm binpath= "\"%GOPATH%\bin\plm.exe\" \"%GOPATH%\src\github.com\midstar\plm\"" start= auto DisplayName= "Process Load Monitor"
 sc description plm "Process Load Monitor Service"
 sc start plm
 sc query plm
