@@ -9,7 +9,7 @@
 ;  - makensis -DVERSION=<version> plm_windows_installer.nsi
 ;     (<version> should be in the format 1.1.1.1)
 ;
-; The installer will be put in GOPATH\bin folder
+; The installer will be put in GOPATH\src\github.com\midstar\plm folder
 ;    
 ;
 ;-------------------------------------------------
@@ -38,7 +38,7 @@
 Name "${APPLICATION_NAME} ${VERSION}"
 
 ; The file to write
-OutFile "${APPLICATION_BINARY}\${APPLICATION_FOLDER}Setup-${VERSION}.exe"
+OutFile "${APPLICATION_SOURCE}\${APPLICATION_FOLDER}Setup-${VERSION}.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES64\${APPLICATION_FOLDER}
