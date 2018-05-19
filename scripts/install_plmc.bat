@@ -9,4 +9,7 @@ echo version: %1
 for /f %%i in ('git rev-parse HEAD') do set GITHASH=%%i
 echo git hash: %GITHASH%
 echo building / installing
-go install -ldflags="-X main.applicationBuildTime=%DATE%_%TIME% -X main.applicationVersion=%1 -X main.applicationGitHash=%GITHASH%" github.com/midstar/plm/plmc
+
+set INSTALLCMD=go install -ldflags="-X main.applicationBuildTime=%DATE%_%TIME% -X main.applicationVersion=%1 -X main.applicationGitHash=%GITHASH%" github.com/midstar/plm/plmc
+echo %INSTALLCMD%
+%INSTALLCMD%
