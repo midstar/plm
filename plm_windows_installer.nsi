@@ -8,6 +8,8 @@
 ; Usage:
 ;  - makensis -DVERSION=<version> plm_windows_installer.nsi
 ;     (<version> should be in the format 1.1.1.1)
+;
+; The installer will be put in GOPATH\bin folder
 ;    
 ;
 ;-------------------------------------------------
@@ -61,8 +63,9 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-;!define MUI_FINISHPAGE_RUN "TBD <open link here>"
-;!define MUI_FINISHPAGE_RUN_TEXT "Launch PLM User Interface"
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch PLM User Interface"
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -128,6 +131,9 @@ Section "${APPLICATION_NAME}" SectionMain
 	; Copy plm URL
   File "${APPLICATION_SOURCE}\Process Load Monitor.url"
 	
+	; Copy plm icon
+  File "${APPLICATION_SOURCE}\images\logo.ico"
+	
 	; Copy the templates
 	SetOutPath "$INSTDIR\templates"
 	File "${APPLICATION_SOURCE}\templates\*.*"
@@ -152,9 +158,28 @@ Section "${APPLICATION_NAME}" SectionMain
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
   
-  ; Install and start Vanadis View service
-  ; TBD ExecWait "install_service.bat"
-  
+	;---------------------------------------------------------------
+  ; Install and start the windows service
+	ClearErrors
+  ExecWait "sc create plm binpath= $\"\$\"$INSTDIR\plm.exe\$\" \$\"$INSTDIR\$\"$\" start= auto DisplayName= $\"Process Load Monitor$\""
+  IfErrors 0 createOk
+  MessageBox MB_OK|MB_ICONSTOP "Unable to install plm as a service."
+  Goto endService
+	
+	createOk:
+  ExecWait "sc description plm $\"Process Load Monitor Service$\""
+  IfErrors 0 descriptionOk
+  MessageBox MB_OK|MB_ICONSTOP "Unable to add description to plm service."
+  Goto endService
+	
+	descriptionOk:
+  ExecWait "sc start plm"
+  IfErrors 0 endService
+  MessageBox MB_OK|MB_ICONSTOP "Unable to start plm service."
+  Goto endService
+	
+	endService:
+	
 SectionEnd
 
 
@@ -164,8 +189,8 @@ Section "Start Menu Shortcuts" SectionStartMenu
 
   CreateDirectory "$SMPROGRAMS\${APPLICATION_FOLDER}"
   CreateShortcut "$SMPROGRAMS\${APPLICATION_FOLDER}\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  ; TBD CreateShortcut "$SMPROGRAMS\${APPLICATION_FOLDER}\VanadisViewManager.lnk" "$INSTDIR\view-gui\Vanadis.View.Manager.exe" "" "$INSTDIR\view-gui\Vanadis.View.Manager.exe" 0
-  
+  CreateShortcut "$SMPROGRAMS\${APPLICATION_FOLDER}\Process Load Monitor.lnk" "$INSTDIR\Process Load Monitor.url" "" "$INSTDIR\logo.ico" 0
+	
 SectionEnd
 
 
@@ -182,8 +207,9 @@ SectionEnd
 Section "Uninstall"
 
   ; --------------------------------------------------------------------------  
-  ; Uninstall and stop  Vanadis View service
-  ; TBD execWait "$INSTDIR\view-main\uninstall_service.bat"
+  ; Uninstall and stop plm service
+  execWait "sc stop plm"
+	execWait "sc delete plm"
  
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPLICATION_FOLDER}"
@@ -198,4 +224,9 @@ Section "Uninstall"
 
 SectionEnd
 
+;======================================================================================================================
+; Helper functions
 
+Function LaunchLink
+  ExecShell "" "$INSTDIR\Process Load Monitor.url"
+FunctionEnd
