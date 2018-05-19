@@ -27,3 +27,7 @@ build_script:
   - '%GOPATH%\src\github.com\midstar\plm\scripts\install_plm.bat %APPVEYOR_BUILD_VERSION%'
   - '%GOPATH%\src\github.com\midstar\plm\scripts\install_plmc.bat %APPVEYOR_BUILD_VERSION%'
   - 'makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %GOPATH%\src\github.com\midstar\plm\scripts\plm_windows_installer.nsi'
+
+artifacts:
+  - path: $(GOPATH)\bin\plmSetup-$(APPVEYOR_BUILD_VERSION).exe
+    name: plmSetup-$(APPVEYOR_BUILD_VERSION)
