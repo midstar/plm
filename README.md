@@ -6,22 +6,20 @@
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/midstar/plm?svg=true)](https://ci.appveyor.com/project/midstar/plm)
 [![Coverage Status](https://coveralls.io/repos/github/midstar/plm/badge.svg?branch=master)](https://coveralls.io/github/midstar/plm?branch=master)
 
-**Work in progress**
-
 Process Load Monitor is a service and application used for monitoring processes. It is primary intended for test purposes, such as monitoring the highest memory consumed by a process and the overal memory allocation trend for processes.
 
-Compared to other tools with similar purposes PLM requires zero configuration, i.e. you don't need to know the PID or make any configuration of the monitor before the measurement. Instead, this tool monitors ALL processes with high resolution (many measured points) in near time and less resolution (fewer measured points). 
+Compared to other tools with similar purposes PLM requires zero configuration, i.e. you don't need to know the PID or make any configuration of the monitor before the measurement. Instead, this tool monitors ALL processes with high resolution (many measured points) in near time and less resolution (fewer measured points) in long time. 
 
 This is a perfect tool to use in your CI Tool (such as Jenkins/Hudson, CircleCI, Bamboo etc.) for testing that your application does not have any memory leek or is consuming too much memory.
 
 ## Features
 
-* Create plots of process memory allocation over time
+* Create plots of process memory allocation over time. See [screenshot](images/screenshot_plot.png).
 * Get the maximum or minimum memory allocation during a specific time priod or over the life time of the process
 * Zero configuration prior measurement, all processes are measured all the time
 * No need to know the PID (Process IDentity), only the name of the processes and optionally its command line arguments.
 * Add failures if memory exceeds a predefined limit for a process (to be used in the CI tool / your tests)
-* Graphical user interface to display all processes (including processes that has died) and also to plot them
+* Graphical user interface to display all processes (including processes that has died) and also to plot them. See [screenshot](images/screenshot_overview.png).
 
 ## Example
 
@@ -49,7 +47,7 @@ If the application that you are interested in is a "script" such as java or pyth
 
 ## Installation
 
-TBD
+Get the latest installer [here](https://ci.appveyor.com/project/midstar/plm/build/artifacts)
 
 ## Features to be added in future
 
