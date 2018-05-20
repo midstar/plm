@@ -10,7 +10,7 @@ Process Load Monitor is a service and application used for monitoring processes.
 
 Compared to other tools with similar purposes PLM requires zero configuration, i.e. you don't need to know the PID or make any configuration of the monitor before the measurement. Instead, this tool monitors ALL processes with high resolution (many measured points) in near time and less resolution (fewer measured points) in long time. 
 
-This is a perfect tool to use in your CI Tool (such as Jenkins/Hudson, CircleCI, Bamboo etc.) for testing that your application does not have any memory leek or is consuming too much memory.
+This is a perfect tool to use in your CI Tool (such as Jenkins/Hudson, AppVeyor, CircleCI, Bamboo etc.) for testing that your application does not have any memory leek or is consuming too much memory.
 
 ## Features
 
@@ -47,13 +47,29 @@ If the application that you are interested in is a "script" such as java or pyth
 
 ## Installation
 
-Get the latest installer [here](https://ci.appveyor.com/project/midstar/plm/build/artifacts)
+Get the latest windows installer [here](https://ci.appveyor.com/project/midstar/plm/build/artifacts).
+
+## Usage
+
+PLM consist to following components:
+
+* **PLM service (plm deamon)** - This is a background process that measures the processes and stores the measured values in RAM. It also consist of a web server with a user interface (normally at http://localhost:12124/) 
+* **PLM Client (plmc)** - This is a command line application for listing processes, checking the maximum memory etc. It is intended to be called from your test tool / CI. In Windows this tool is normally located in C:\Program Files\plm\client\plmc.exe.
+
+Write following to list the available commands in the PLM Client:
+
+    plmc -h
+
+## Configuration
+
+The default configuration should suit most people. See the plm.config file for the available configuration parameters.
 
 ## Features to be added in future
 
 * Measure the process CPU usage
 * Add support for Linux
 * Add support for Mac
+* Store measured values on disk instead of RAM (currently all measurements are lost if computer is restarted)
 
 ## Author and license
 

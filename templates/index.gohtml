@@ -12,7 +12,7 @@
     }
     
     .top-header {
-      background: linear-gradient(#00285c, rgba(69, 157, 238, 0.75));
+      background: linear-gradient(#A30003, #550003);
       height: 25px;
       margin-top: 0px;
       margin-left: 0px;
@@ -34,6 +34,13 @@
       color: white;
       padding-top: 1px;
     }
+    
+    .help {
+      font-size: 12px;
+      letter-spacing: 7px;
+      color: white;
+      text-decoration: none;
+    }
 
     .panel {
       background-color: #FFFFFF;
@@ -42,13 +49,13 @@
       margin-right: 10px;
       margin-bottom: 10px;
       border-style: solid;
-      border-color: #3175B0;
+      border-color: #A30003;
       border-width: 1px;
       border-radius:3px 3px 0px 0px;
     }
 
     .panel-header {
-      background-color: #3175B0;
+      background-color: #A30003;
       height: 20px;
       margin-top: 0px;
       margin-left: 0px;
@@ -72,12 +79,12 @@
     }
 
     button {
-      background: #3498db;
-      background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
-      background-image: -moz-linear-gradient(top, #3498db, #2980b9);
-      background-image: -ms-linear-gradient(top, #3498db, #2980b9);
-      background-image: -o-linear-gradient(top, #3498db, #2980b9);
-      background-image: linear-gradient(to bottom, #3498db, #2980b9);
+      background: #A30003;
+      background-image: -webkit-linear-gradient(top, #A30003, #550003);
+      background-image: -moz-linear-gradient(top, #A30003, #550003);
+      background-image: -ms-linear-gradient(top, #A30003, #550003);
+      background-image: -o-linear-gradient(top, #A30003, #550003);
+      background-image: linear-gradient(to bottom, #A30003, #550003);
       -webkit-border-radius: 10;
       -moz-border-radius: 10;
       border-radius: 10px;
@@ -149,7 +156,7 @@
   <body>
     <div class="top-header">
       <div class="title-info">
-      PROCESS LOAD MONITOR {{.Version}}
+      PROCESS LOAD MONITOR {{.Version}} <a class="help" href="https://github.com/midstar/plm" target="_blank">(HELP)</a>
       </div>
     </div>
     
