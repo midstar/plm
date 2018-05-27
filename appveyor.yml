@@ -29,5 +29,5 @@ build_script:
   - 'makensis -DVERSION=%APPVEYOR_BUILD_VERSION% %GOPATH%\src\github.com\midstar\plm\scripts\plm_windows_installer.nsi'
 
 artifacts:
-  - path: plmSetup-$(APPVEYOR_BUILD_VERSION).exe
-    name: plmSetup-$(APPVEYOR_BUILD_VERSION)
+  - path: plmSetup.exe
+    name: plmSetup.exe

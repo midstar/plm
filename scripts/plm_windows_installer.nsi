@@ -38,7 +38,7 @@
 Name "${APPLICATION_NAME} ${VERSION}"
 
 ; The file to write
-OutFile "${APPLICATION_SOURCE}\${APPLICATION_FOLDER}Setup-${VERSION}.exe"
+OutFile "${APPLICATION_SOURCE}\${APPLICATION_FOLDER}Setup.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES64\${APPLICATION_FOLDER}
