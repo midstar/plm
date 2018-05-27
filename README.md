@@ -47,7 +47,9 @@ If the application that you are interested in is a "script" such as java or pyth
 
 ## Installation
 
-Get the latest windows installer [here](https://ci.appveyor.com/project/midstar/plm/build/artifacts).
+Get the latest official Windows installer [here on GitHub](https://github.com/midstar/plm/releases).
+
+Experimental / daily builds are found [on AppVeyor](https://ci.appveyor.com/project/midstar/plm/build/artifacts).
 
 ## Usage
 
